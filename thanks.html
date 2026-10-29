@@ -21,8 +21,8 @@
 
     <h2>1. Download the app</h2>
     <div class="downloads">
-      <a class="btn" href="https://github.com/AidenJohnston/reel-studio-app/releases/latest">Download for Mac<small>Apple silicon, macOS 14+ (.dmg)</small></a>
-      <a class="btn" href="https://github.com/AidenJohnston/reel-studio-app/releases/latest">Download for Windows<small>Windows 10/11, 64-bit (.exe)</small></a>
+      <a class="btn" id="dl-mac" href="https://github.com/AidenJohnston/reel-studio-app/releases/latest/download/Reel-Studio-0.1.2-arm64.dmg">Download for Mac<small>Apple silicon, macOS 14+ (.dmg)</small></a>
+      <a class="btn" id="dl-win" href="https://github.com/AidenJohnston/reel-studio-app/releases/latest/download/Reel-Studio-Setup-0.1.2-x64.exe">Download for Windows<small>Windows 10/11, 64-bit (.exe)</small></a>
     </div>
     <p class="muted small">Both buttons open the latest release on GitHub. Pick <code>Reel-Studio-&lt;version&gt;-arm64.dmg</code> for a Mac or <code>Reel-Studio-Setup-&lt;version&gt;-x64.exe</code> for Windows. On a Mac, drag Reel Studio into Applications and open it. On Windows, if a blue "Windows protected your PC" box appears, click <strong>More info</strong>, then <strong>Run anyway</strong>. The first time it opens, the app downloads its speech model once; keep the window open until the bar finishes.</p>
 
@@ -39,7 +39,7 @@
     <p class="muted small">The edits run on your own plan and count against its usage limits. You can also skip this and use Reel Studio without an AI: it still cuts the pauses, adds captions and music, and makes a cover.</p>
 
     <h2>3. Get help</h2>
-    <p>Something not working? Email <a href="mailto:[SUPPORT EMAIL]">[SUPPORT EMAIL]</a> and we'll help.</p>
+    <p>Something not working? Email <a href="mailto:support@getreelstudio.com">support@getreelstudio.com</a> and we'll help.</p>
     <p id="portal-line" hidden>To change your payment method or cancel, <a href="https://billing.stripe.com/p/login/28E3co5Ak1Hf1Ii6Ktc7u00">manage or cancel your subscription</a>. You keep access until the end of the month you've paid for.</p>
     <p>Changed your mind? You can have a full refund within 14 days. See the <a href="refund.html">refund policy</a>.</p>
   </div>
@@ -58,6 +58,18 @@
 </footer>
 
 <script>
+// Point the download buttons at the newest installer files. Falls back to the pinned 0.1.2 links above.
+fetch('https://api.github.com/repos/AidenJohnston/reel-studio-app/releases/latest')
+  .then(function (r) { return r.ok ? r.json() : null; })
+  .then(function (rel) {
+    if (!rel || !rel.assets) return;
+    rel.assets.forEach(function (a) {
+      if (/\.dmg$/.test(a.name)) document.getElementById('dl-mac').href = a.browser_download_url;
+      if (/\.exe$/.test(a.name)) document.getElementById('dl-win').href = a.browser_download_url;
+    });
+  })
+  .catch(function () {});
+
   (function () {
     var plan = new URLSearchParams(location.search).get('plan');
     var line = document.getElementById('plan-line');
