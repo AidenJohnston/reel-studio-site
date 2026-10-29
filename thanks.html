@@ -21,8 +21,9 @@
 
     <h2>1. Download the app</h2>
     <div class="downloads">
-      <a class="btn" id="dl-mac" href="https://github.com/AidenJohnston/reel-studio-app/releases/latest/download/Reel-Studio-0.1.2-arm64.dmg">Download for Mac<small>Apple silicon, macOS 14+ (.dmg)</small></a>
-      <a class="btn" id="dl-win" href="https://github.com/AidenJohnston/reel-studio-app/releases/latest/download/Reel-Studio-Setup-0.1.2-x64.exe">Download for Windows<small>Windows 10/11, 64-bit (.exe)</small></a>
+      <a class="btn" id="dl-win" href="https://github.com/AidenJohnston/reel-studio-app/releases/latest/download/Reel-Studio-Setup-0.1.2-x64.exe">Download now<small>Windows 10/11, 64-bit (.exe)</small></a>
+      <a class="btn" id="dl-mac" href="https://github.com/AidenJohnston/reel-studio-app/releases/latest/download/Reel-Studio-0.1.2-arm64.dmg">Download now<small>Apple silicon, macOS 14+ (.dmg)</small></a>
+      <p class="alt-dl" id="dl-alt"></p>
     </div>
     <p class="muted small">Both buttons open the latest release on GitHub. Pick <code>Reel-Studio-&lt;version&gt;-arm64.dmg</code> for a Mac or <code>Reel-Studio-Setup-&lt;version&gt;-x64.exe</code> for Windows. On a Mac, drag Reel Studio into Applications and open it. On Windows, if a blue "Windows protected your PC" box appears, click <strong>More info</strong>, then <strong>Run anyway</strong>. The first time it opens, the app downloads its speech model once; keep the window open until the bar finishes.</p>
 
@@ -58,6 +59,17 @@
 </footer>
 
 <script>
+// Show one "Download now" for the visitor's own system; offer the other one as a small link.
+(function () {
+  var mac = /Mac|iPhone|iPad/.test(navigator.platform) || /Macintosh/.test(navigator.userAgent);
+  var hide = document.getElementById(mac ? 'dl-win' : 'dl-mac');
+  var alt = document.getElementById('dl-alt');
+  if (hide && alt) {
+    hide.style.display = 'none';
+    alt.innerHTML = (mac ? 'On Windows instead? ' : 'On a Mac instead? ') + '<a href="' + hide.href + '" id="dl-alt-link">Download for ' + (mac ? 'Windows' : 'Mac') + '</a>.';
+  }
+})();
+
 // Point the download buttons at the newest installer files. Falls back to the pinned 0.1.2 links above.
 fetch('https://api.github.com/repos/AidenJohnston/reel-studio-app/releases/latest')
   .then(function (r) { return r.ok ? r.json() : null; })
@@ -66,6 +78,7 @@ fetch('https://api.github.com/repos/AidenJohnston/reel-studio-app/releases/lates
     rel.assets.forEach(function (a) {
       if (/\.dmg$/.test(a.name)) document.getElementById('dl-mac').href = a.browser_download_url;
       if (/\.exe$/.test(a.name)) document.getElementById('dl-win').href = a.browser_download_url;
+      var altLink = document.getElementById('dl-alt-link'); var hidden = document.querySelector('.btn[style*="display: none"]'); if (altLink && hidden) altLink.href = hidden.href;
     });
   })
   .catch(function () {});

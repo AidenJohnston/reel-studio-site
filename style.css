@@ -126,3 +126,5 @@ figcaption { font-size: .92rem; color: var(--muted); margin-top: 10px; }
 .downloads .btn { padding: 16px; }
 .downloads small { display: block; font-weight: 400; opacity: .75; margin-top: 2px; }
 @media (max-width: 560px) { .downloads { grid-template-columns: 1fr; } }
+
+.alt-dl { margin: 0.5rem 0 0; font-size: 0.95rem; color: #555; }
