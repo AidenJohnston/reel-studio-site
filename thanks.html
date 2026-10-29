@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Thank you: download Reel Studio</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="./"><span class="brand-mark" aria-hidden="true"></span>Reel Studio</a>
+  </div>
+</header>
+
+<main class="doc">
+  <div class="wrap narrow">
+    <h1>Thank you.</h1>
+    <p id="plan-line">Thanks for paying for Reel Studio. It funds development. Your receipt is on its way by email.</p>
+
+    <h2>1. Download the app</h2>
+    <div class="downloads">
+      <a class="btn" href="https://github.com/AidenJohnston/reel-studio-app/releases/latest">Download for Mac<small>Apple silicon, macOS 14+ (.dmg)</small></a>
+      <a class="btn" href="https://github.com/AidenJohnston/reel-studio-app/releases/latest">Download for Windows<small>Windows 10/11, 64-bit (.exe)</small></a>
+    </div>
+    <p class="muted small">Both buttons open the latest release on GitHub. Pick <code>Reel-Studio-&lt;version&gt;-arm64.dmg</code> for a Mac or <code>Reel-Studio-Setup-&lt;version&gt;-x64.exe</code> for Windows. On a Mac, drag Reel Studio into Applications and open it. On Windows, if a blue "Windows protected your PC" box appears, click <strong>More info</strong>, then <strong>Run anyway</strong>. The first time it opens, the app downloads its speech model once; keep the window open until the bar finishes.</p>
+
+    <h2>2. Connect your own AI</h2>
+    <p>Reel Studio's AI editor runs on your own paid Claude or ChatGPT plan. Setting it up takes three steps:</p>
+    <ol>
+      <li><strong>Install and open Reel Studio.</strong></li>
+      <li><strong>Click Connect Claude or Connect ChatGPT.</strong> If you don't have Anthropic's Claude Code app or OpenAI's Codex app yet, Reel Studio installs the official one for you.</li>
+      <li><strong>Sign in on the vendor's own page.</strong> Anthropic's or OpenAI's sign-in opens in your browser. Reel Studio never sees that sign-in, your password or any token.</li>
+    </ol>
+    <figure style="margin:24px 0">
+      <img class="shot" src="img/connect-ai.png" width="1280" height="820" alt="Connect your AI editor: Connect Claude or Connect ChatGPT, use an API key, or skip it">
+    </figure>
+    <p class="muted small">The edits run on your own plan and count against its usage limits. You can also skip this and use Reel Studio without an AI: it still cuts the pauses, adds captions and music, and makes a cover.</p>
+
+    <h2>3. Get help</h2>
+    <p>Something not working? Email <a href="mailto:[SUPPORT EMAIL]">[SUPPORT EMAIL]</a> and we'll help.</p>
+    <p id="portal-line" hidden>To change your payment method or cancel, <a href="#STRIPE_PORTAL">manage or cancel your subscription</a>. You keep access until the end of the month you've paid for.</p>
+    <p>Changed your mind? You can have a full refund within 14 days. See the <a href="refund.html">refund policy</a>.</p>
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <span>Reel Studio is sold by [LEGAL ENTITY NAME].</span>
+    <nav aria-label="Footer">
+      <a href="terms.html">Terms</a>
+      <a href="privacy.html">Privacy</a>
+      <a href="refund.html">Refunds</a>
+      <a href="https://github.com/AidenJohnston/reel-studio-app">GitHub</a>
+    </nav>
+  </div>
+</footer>
+
+<script>
+  (function () {
+    var plan = new URLSearchParams(location.search).get('plan');
+    var line = document.getElementById('plan-line');
+    if (plan === 'monthly') {
+      line.textContent = 'Thanks for subscribing to Reel Studio for $20 a month. It funds development. Your receipt is on its way by email.';
+      document.getElementById('portal-line').hidden = false;
+    } else if (plan === 'once') {
+      line.textContent = 'Thanks for buying Reel Studio. Your $99 license covers this version and every 1.x update, and it funds development. Your receipt is on its way by email.';
+    }
+  })();
+</script>
+</body>
+</html>
