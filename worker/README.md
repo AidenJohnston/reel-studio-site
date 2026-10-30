@@ -16,10 +16,12 @@ tells the app whether a newer version is out. No account, no cookie, no analytic
    `reel-studio-installers` with resume support.
 4. The thanks page remembers the token in the buyer's browser. `update.html` (what the app's update card opens)
    uses it to offer the newest version, and otherwise shows the "email me my link" form, which posts to
-   `POST /api/link`. That answers `{delivery: "email"}` and sends a fresh link if Email Sending is configured,
-   or `{delivery: "support"}` so the page tells the buyer to email support instead.
-5. `POST /stripe/webhook` records `checkout.session.completed` events (signature verified) so the email form
-   works even for buyers who never opened the thanks page.
+   `POST /api/link`. That answers `{delivery: "email"}` and sends a fresh link (Cloudflare Email Sending from
+   support@getreelstudio.com), or `{delivery: "support"}` if the binding is absent, so the page tells the buyer
+   to email support instead.
+5. `POST /stripe/webhook` records `checkout.session.completed` events (signature verified) and emails the buyer
+   their download links at once (the receipt; Stripe's own payment receipt is separate). A buyer who closes
+   the thanks page, or never reaches it, still gets what they paid for. A retried event does not send twice.
 6. `GET /latest.json` is the tokenless manifest the app's update check reads: version, the page to open, and the
    file names, sizes and SHA-256 hashes. Cached five minutes.
 
@@ -61,9 +63,9 @@ Secrets (`npx wrangler secret put NAME`):
 | `STRIPE_WEBHOOK_SECRET` | The signing secret of the Stripe webhook endpoint `https://dl.getreelstudio.com/stripe/webhook` (event `checkout.session.completed`). |
 | `ADMIN_SECRET` | 32+ random bytes for `tools/publish.mjs`. Without it the `/admin` routes do not exist. |
 
-Bindings (`wrangler.jsonc`): KV `PURCHASES`, R2 `INSTALLERS`, and optionally the `send_email` binding `EMAIL`
-once Email Sending is enabled for the domain (Workers Paid plan). Until then "email me my link" degrades to
-"email support".
+Bindings (`wrangler.jsonc`): KV `PURCHASES`, R2 `INSTALLERS`, and the `send_email` binding `EMAIL` (Cloudflare
+Email Sending, enabled for getreelstudio.com on 2026-10-30; Workers Paid plan, 3,000 emails a month included).
+Without the binding, receipts are skipped and "email me my link" degrades to "email support".
 
 ## Privacy
 

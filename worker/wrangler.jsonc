@@ -21,8 +21,9 @@
     "FROM_NAME": "Reel Studio"
   },
   "kv_namespaces": [{ "binding": "PURCHASES", "id": "4f3c29243a334a18b6e9423e522d8c74" }],
-  "r2_buckets": [{ "binding": "INSTALLERS", "bucket_name": "reel-studio-installers" }]
-  // "Email me my link" needs Cloudflare Email Sending (Workers Paid plan, domain onboarded with
-  // `npx wrangler email sending enable getreelstudio.com`). Until then the Worker answers delivery: "support".
-  // "send_email": [{ "name": "EMAIL", "allowed_sender_addresses": ["support@getreelstudio.com"] }]
+  "r2_buckets": [{ "binding": "INSTALLERS", "bucket_name": "reel-studio-installers" }],
+  // Receipts and "email me my link". Needs Cloudflare Email Sending on the Workers Paid plan with the domain
+  // onboarded (`npx wrangler email sending enable getreelstudio.com`, done 2026-10-30). Remove the binding and
+  // the Worker degrades to delivery: "support".
+  "send_email": [{ "name": "EMAIL", "allowed_sender_addresses": ["support@getreelstudio.com"] }]
 }
