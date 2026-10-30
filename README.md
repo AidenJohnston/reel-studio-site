@@ -6,10 +6,13 @@ domain root or under a subpath such as `/reel-studio-site/`.
 | File | What |
 |---|---|
 | `index.html` | Product page: hero, screenshots, how it works, what you get, pricing, what you need, FAQ |
-| `thanks.html` | Where both Stripe Payment Links redirect. Reads `?plan=once` or `?plan=monthly` |
+| `thanks.html` | Where both Stripe Payment Links redirect. Reads `?plan=once|monthly&session_id={CHECKOUT_SESSION_ID}` and asks the download server for the buyer's links |
+| `update.html` | What the app's "Update available" card opens: the newest version for a browser that remembers its download code, else the "email me my link" form |
+| `downloads.js` | Shared by the two pages: talks to `https://dl.getreelstudio.com` (see `worker/`) |
 | `terms.html`, `privacy.html`, `refund.html` | Terms of sale, privacy policy, refund policy |
 | `style.css` | All styling |
 | `img/` | Screenshots copied from the app repo's `docs/images/` (see `img/CREDITS.md`) |
+| `worker/` | The Cloudflare Worker behind `dl.getreelstudio.com`: paid downloads, the update manifest, the release tool. Its own README |
 
 ## Publish on GitHub Pages
 
@@ -26,8 +29,11 @@ Preview locally with `python -m http.server 8000` in this folder and open `http:
 
 Set each Payment Link's "after payment" redirect to the thanks page on the published site:
 
-- $99 link: `<site>/thanks.html?plan=once`
-- $20/month link: `<site>/thanks.html?plan=monthly`
+- $99 link: `<site>/thanks.html?plan=once&session_id={CHECKOUT_SESSION_ID}`
+- $20/month link: `<site>/thanks.html?plan=monthly&session_id={CHECKOUT_SESSION_ID}`
+
+`{CHECKOUT_SESSION_ID}` is typed literally: Stripe replaces it. The thanks page uses it to fetch the buyer's
+download links from the Worker.
 
 Use `<site>/terms.html` and `<site>/privacy.html` for the Stripe ToS and privacy URLs.
 

@@ -1,0 +1,28 @@
+// Reel Studio downloads Worker. Deploy from this folder: `npm run deploy` (wrangler must be logged in to the
+// Cloudflare account that holds the getreelstudio.com zone).
+//
+// Secrets (never in this file; set with `npx wrangler secret put <NAME>`):
+//   TOKEN_SECRET           random 32+ bytes; signs download tokens and keys the email hashes
+//   STRIPE_SECRET_KEY      a RESTRICTED Stripe key with only "Checkout Sessions: Read"
+//   STRIPE_WEBHOOK_SECRET  the signing secret of the webhook endpoint that posts to /stripe/webhook
+//   ADMIN_SECRET           random 32+ bytes; lets tools/publish.mjs upload installers and publish the manifest
+//
+// The release manifest lives in KV under the key `manifest` (see README.md); the installers live in R2.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "reel-studio-downloads",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-01",
+  "observability": { "enabled": true },
+  "routes": [{ "pattern": "dl.getreelstudio.com", "custom_domain": true }],
+  "vars": {
+    "SITE_ORIGIN": "https://getreelstudio.com",
+    "FROM_EMAIL": "support@getreelstudio.com",
+    "FROM_NAME": "Reel Studio"
+  },
+  "kv_namespaces": [{ "binding": "PURCHASES", "id": "4f3c29243a334a18b6e9423e522d8c74" }],
+  "r2_buckets": [{ "binding": "INSTALLERS", "bucket_name": "reel-studio-installers" }]
+  // "Email me my link" needs Cloudflare Email Sending (Workers Paid plan, domain onboarded with
+  // `npx wrangler email sending enable getreelstudio.com`). Until then the Worker answers delivery: "support".
+  // "send_email": [{ "name": "EMAIL", "allowed_sender_addresses": ["support@getreelstudio.com"] }]
+}

@@ -128,3 +128,6 @@ figcaption { font-size: .92rem; color: var(--muted); margin-top: 10px; }
 @media (max-width: 560px) { .downloads { grid-template-columns: 1fr; } }
 
 .alt-dl { margin: 0.5rem 0 0; font-size: 0.95rem; color: #555; }
+
+/* The download pages toggle elements with the hidden attribute; keep it winning over display rules above. */
+[hidden] { display: none !important; }

@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Get the latest Reel Studio</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="./"><span class="brand-mark" aria-hidden="true"></span>Reel Studio</a>
+  </div>
+</header>
+
+<main class="doc">
+  <div class="wrap narrow">
+    <h1>Get the latest Reel Studio</h1>
+    <p id="intro">Your purchase covers every update. Download the newest version below, install it over the one you have, and your reels and settings stay where they are.</p>
+
+    <div class="downloads" id="downloads">
+      <p class="muted" id="dl-status">Checking for your download link…</p>
+      <a class="btn" id="dl-win" href="#" hidden>Download now<small>Windows 10/11, 64-bit (.exe)</small></a>
+      <a class="btn" id="dl-mac" href="#" hidden>Download now<small>Apple silicon, macOS 14+ (.dmg)</small></a>
+      <p class="alt-dl" id="dl-alt"></p>
+    </div>
+    <p class="muted small" id="dl-help" hidden>On a Mac, drag Reel Studio into Applications, replacing the old one. On Windows, run the installer; it replaces the old version. If a blue "Windows protected your PC" box appears, click <strong>More info</strong>, then <strong>Run anyway</strong>.</p>
+    <p class="muted small" id="dl-keep" hidden>This browser remembers your download code, so you can come back here for the next version too.</p>
+
+    <form id="link-form" hidden>
+      <h2>Email me my link</h2>
+      <p>Enter the email you paid with and we'll send your download link.</p>
+      <p class="btn-row">
+        <input type="email" id="link-email" name="email" required autocomplete="email" placeholder="you@example.com" style="flex:1 1 240px;padding:12px 14px;border:1px solid var(--line);border-radius:10px;font:inherit">
+        <button type="submit" class="btn" id="link-send">Send my link</button>
+      </p>
+      <p class="muted small" id="link-result"></p>
+    </form>
+
+    <p class="muted small" style="margin-top:32px">Haven't bought Reel Studio yet? <a href="./#pricing">Buy it</a>, and your download link appears right after payment. Questions: <a href="mailto:support@getreelstudio.com">support@getreelstudio.com</a>.</p>
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <span>Reel Studio is sold by Curate Technologies LLC.</span>
+    <nav aria-label="Footer">
+      <a href="terms.html">Terms</a>
+      <a href="privacy.html">Privacy</a>
+      <a href="refund.html">Refunds</a>
+      <a href="https://github.com/AidenJohnston/reel-studio-app">GitHub</a>
+    </nav>
+  </div>
+</footer>
+
+<script src="downloads.js"></script>
+<script>
+(function () {
+  var form = document.getElementById('link-form');
+  var result = document.getElementById('link-result');
+  var SUPPORT = 'Email <a href="mailto:support@getreelstudio.com">support@getreelstudio.com</a> from the address you paid with and we will send your link.';
+
+  function showForm(intro) {
+    var s = document.getElementById('dl-status');
+    if (s) { s.innerHTML = intro; }
+    form.hidden = false;
+  }
+
+  var remembered = ReelDownloads.remembered();
+  if (remembered) {
+    ReelDownloads.claim('token=' + encodeURIComponent(remembered), {
+      expired: 'The download code this browser remembered has expired.',
+      unknown: 'This browser\'s download code was not recognised.',
+      busy: 'The download server is busy. Try again in a minute, or ' + SUPPORT
+    }).then(function (answer) {
+      if (!answer) showForm(document.getElementById('dl-status').innerHTML + ' Get a fresh link below.');
+    });
+  } else {
+    showForm('This browser has no download code yet.');
+  }
+
+  form.addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    var email = document.getElementById('link-email').value.trim();
+    var btn = document.getElementById('link-send');
+    btn.disabled = true;
+    result.textContent = 'Sending…';
+    ReelDownloads.requestLink(email).then(function (delivery) {
+      result.innerHTML = delivery === 'email'
+        ? 'If that email bought Reel Studio, your link is on its way. Check your spam folder if it does not arrive in a few minutes.'
+        : SUPPORT;
+    }).catch(function (why) {
+      result.innerHTML = why === 'bad' ? 'That does not look like an email address.' : why === 'slow' ? 'Too many tries. Wait an hour, or ' + SUPPORT : 'Something went wrong. ' + SUPPORT;
+    }).then(function () { btn.disabled = false; });
+  });
+})();
+</script>
+</body>
+</html>
