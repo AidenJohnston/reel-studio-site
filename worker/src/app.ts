@@ -10,7 +10,9 @@
 //   GET  /source/<release>/<file>  public, no token: the open-source parts' source (src/source.ts)
 //
 // No account, no cookie, no analytics. A purchase record is a session id, a plan, a keyed hash of the
-// buyer's email, and timestamps. Logs carry a short session id and a file name, nothing else.
+// buyer's email, the Stripe customer id, and timestamps. What this code logs is a short session id and a
+// file name. Cloudflare's own request logs (observability in wrangler.jsonc) are another matter: they record
+// every request's full URL, so they hold the token of each /d/<token>/ download link.
 import { handleAdmin } from './admin'
 import { linkEmail } from './email'
 import { fileByName, loadManifest, publicLatest, type Manifest, type ManifestFile } from './manifest'
@@ -39,6 +41,8 @@ export interface Deps {
   fetch: typeof fetch
   /** ms since 1970 */
   now(): number
+  /** The Workers cache (caches.default) for the /source/ listings. Absent = no caching. */
+  cache?: Cache
 }
 
 export const CLAIM_LIMIT = { n: 60, windowSec: 3600 }
@@ -56,7 +60,7 @@ export async function handle(request: Request, env: Env, ctx: ExecutionContext, 
     if (path === '/api/link' && request.method === 'POST') return await link(request, url, env, ctx, deps)
     if (path === '/stripe/webhook' && request.method === 'POST') return await webhook(request, env, ctx, deps)
     if (path.startsWith('/d/') && (request.method === 'GET' || request.method === 'HEAD')) return await download(request, url, env, deps)
-    if ((path === '/source' || path.startsWith('/source/')) && (request.method === 'GET' || request.method === 'HEAD')) return await handleSource(request, url, env.INSTALLERS)
+    if ((path === '/source' || path.startsWith('/source/')) && (request.method === 'GET' || request.method === 'HEAD')) return await handleSource(request, url, env.INSTALLERS, deps.cache)
     if (path.startsWith('/admin/')) return await handleAdmin(request, url, env, deps.now())
     if (path === '/' || path === '') return Response.redirect(`${env.SITE_ORIGIN}/`, 302)
     return json({ error: 'not found' }, 404, env)
@@ -185,7 +189,7 @@ async function download(request: Request, url: URL, env: Env, deps: Deps): Promi
   })
   const res = await streamObject(request, env.INSTALLERS, f.key, headers)
   if (!res) return json({ error: 'file missing' }, 404, env)
-  if (request.method === 'GET' && res.status !== 304) console.log(`[downloads] get ${f.name} ${c.p} ${shortSid(c.s)}${res.status === 206 ? ' (range)' : ''}`)
+  if (request.method === 'GET' && (res.status === 200 || res.status === 206)) console.log(`[downloads] get ${f.name} ${c.p} ${shortSid(c.s)}${res.status === 206 ? ' (range)' : ''}`)
   return res
 }
 

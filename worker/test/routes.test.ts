@@ -140,6 +140,27 @@ describe('GET /d/<token>/<file>', () => {
     expect(suffix.status).toBe(206)
     expect(suffix.headers.get('content-range')).toBe('bytes 3-4/5')
   })
+  it('an unsatisfiable Range is a 416, not a server error', async () => {
+    const w = world()
+    for (const range of ['bytes=600-', 'bytes=5-', 'bytes=-0']) {
+      const res = await run(w, req(`/d/${await token(w)}/Reel-Studio-Setup-0.1.2-x64.exe`, { headers: { range } }))
+      expect(res.status, range).toBe(416)
+      expect(res.headers.get('content-range')).toBe('bytes */5')
+      expect(res.headers.get('cache-control')).toBe('no-store')
+      expect(res.body).toBeNull()
+    }
+  })
+  it('If-Match / If-Unmodified-Since never make a 304; a stale If-Range gets the whole file', async () => {
+    const w = world()
+    const url = async () => `/d/${await token(w)}/Reel-Studio-Setup-0.1.2-x64.exe`
+    expect((await run(w, req(await url(), { headers: { 'if-match': '"nope"' } }))).status).toBe(200)
+    expect((await run(w, req(await url(), { headers: { 'if-unmodified-since': 'Thu, 01 Jan 1970 00:00:00 GMT' } }))).status).toBe(200)
+    const stale = await run(w, req(await url(), { headers: { range: 'bytes=3-', 'if-range': '"etag-v0.1.1/old.exe"' } }))
+    expect(stale.status).toBe(200)
+    expect(new Uint8Array(await stale.arrayBuffer())).toEqual(new Uint8Array([1, 2, 3, 4, 5]))
+    const fresh = await run(w, req(await url(), { headers: { range: 'bytes=3-', 'if-range': '"etag-v0.1.2/Reel-Studio-Setup-0.1.2-x64.exe"' } }))
+    expect(fresh.status).toBe(206)
+  })
   it('HEAD gives the size without the body', async () => {
     const w = world()
     const res = await run(w, req(`/d/${await token(w)}/Reel-Studio-0.1.2-arm64.dmg`, { method: 'HEAD' }))
