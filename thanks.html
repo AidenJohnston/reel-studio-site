@@ -5,39 +5,54 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
 <title>Thank you: download Reel Studio</title>
+<meta name="theme-color" content="#08080a">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preload" href="fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
+<a class="skip" href="#main">Skip to content</a>
+
 <header class="site-header">
   <div class="wrap">
     <a class="brand" href="./"><span class="brand-mark" aria-hidden="true"></span>Reel Studio</a>
+    <nav class="nav" aria-label="Main">
+      <a href="./#faq">FAQ</a>
+      <a class="btn sm secondary" href="mailto:support@getreelstudio.com">Get help</a>
+    </nav>
   </div>
 </header>
 
-<main class="doc">
+<main class="doc" id="main">
+  <div class="glow violet" aria-hidden="true"></div>
   <div class="wrap narrow">
+    <span class="kicker">Payment received</span>
     <h1>Thank you.</h1>
-    <p id="plan-line">Thanks for paying for Reel Studio. It funds development. Your receipt is on its way by email.</p>
+    <p id="plan-line" class="lede-doc">Thanks for paying for Reel Studio. It funds development. Your receipt is on its way by email.</p>
 
-    <h2>1. Download the app</h2>
-    <div class="downloads" id="downloads">
-      <p class="muted" id="dl-status">Getting your download ready…</p>
-      <a class="btn" id="dl-win" href="#" hidden>Download now<small>Windows 10/11, 64-bit (.exe)</small></a>
-      <a class="btn" id="dl-mac" href="#" hidden>Download now<small>Apple silicon, macOS 14+ (.dmg)</small></a>
-      <p class="alt-dl" id="dl-alt"></p>
+    <div class="dl-panel">
+      <h2>1. Download the app</h2>
+      <div class="downloads" id="downloads">
+        <p class="muted loading" id="dl-status">Getting your download ready…</p>
+        <a class="btn" id="dl-win" href="#" hidden>Download now<small>Windows 10/11, 64-bit (.exe)</small></a>
+        <a class="btn" id="dl-mac" href="#" hidden>Download now<small>Apple silicon, macOS 14+ (.dmg)</small></a>
+        <p class="alt-dl" id="dl-alt"></p>
+      </div>
+      <div class="dl-notes">
+        <p class="muted small" id="dl-help" hidden>On a Mac, drag Reel Studio into Applications and open it. On Windows, if a blue "Windows protected your PC" box appears, click <strong>More info</strong>, then <strong>Run anyway</strong>. The first time it opens, the app downloads its speech model once; keep the window open until the bar finishes.</p>
+        <p class="muted small" id="dl-keep" hidden>Keep this page: the link is yours and works for new versions too. Lost it? <a href="update.html">Get a fresh link</a> with the email you paid with.</p>
+      </div>
     </div>
-    <p class="muted small" id="dl-help" hidden>On a Mac, drag Reel Studio into Applications and open it. On Windows, if a blue "Windows protected your PC" box appears, click <strong>More info</strong>, then <strong>Run anyway</strong>. The first time it opens, the app downloads its speech model once; keep the window open until the bar finishes.</p>
-    <p class="muted small" id="dl-keep" hidden>Keep this page: the link is yours and works for new versions too. Lost it? <a href="update.html">Get a fresh link</a> with the email you paid with.</p>
 
     <h2>2. Connect your own AI</h2>
     <p>Reel Studio's AI editor runs on your own paid Claude or ChatGPT plan. Setting it up takes three steps:</p>
-    <ol>
+    <ol class="steps-list">
       <li><strong>Install and open Reel Studio.</strong></li>
       <li><strong>Click Connect Claude or Connect ChatGPT.</strong> If you don't have Anthropic's Claude Code app or OpenAI's Codex app yet, Reel Studio installs the official one for you.</li>
       <li><strong>Sign in on the vendor's own page.</strong> Anthropic's or OpenAI's sign-in opens in your browser. Reel Studio never sees that sign-in, your password or any token.</li>
     </ol>
-    <figure style="margin:24px 0">
-      <img class="shot" src="img/connect-ai.png" width="1280" height="820" alt="Connect your AI editor: Connect Claude or Connect ChatGPT, use an API key, or skip it">
+    <figure class="connect-shot">
+      <div class="crop shot" style="--x:340;--y:110;--w:600;--h:600"><img src="img/connect-ai.png" width="1280" height="820" alt="Connect your AI editor: Connect Claude or Connect ChatGPT, use an API key, or skip it"></div>
     </figure>
     <p class="muted small">The edits run on your own plan and count against its usage limits. You can also skip this and use Reel Studio without an AI: it still cuts the pauses, adds captions and music, and makes a cover.</p>
 
@@ -50,12 +65,16 @@
 
 <footer class="site-footer">
   <div class="wrap">
-    <span>Reel Studio is sold by Curate Technologies LLC.</span>
+    <div>
+      <a class="brand" href="./"><span class="brand-mark" aria-hidden="true"></span>Reel Studio</a>
+      <p>Reel Studio is sold by Curate Technologies LLC.</p>
+    </div>
     <nav aria-label="Footer">
       <a href="terms.html">Terms</a>
       <a href="privacy.html">Privacy</a>
       <a href="refund.html">Refunds</a>
       <a href="https://github.com/AidenJohnston/reel-studio-app">GitHub</a>
+      <a href="mailto:support@getreelstudio.com">support@getreelstudio.com</a>
     </nav>
   </div>
 </footer>

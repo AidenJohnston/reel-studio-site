@@ -10,8 +10,10 @@ domain root or under a subpath such as `/reel-studio-site/`.
 | `update.html` | What the app's "Update available" card opens: the newest version for a browser that remembers its download code, else the "email me my link" form |
 | `downloads.js` | Shared by the two pages: talks to `https://dl.getreelstudio.com` (see `worker/`) |
 | `terms.html`, `privacy.html`, `refund.html` | Terms of sale, privacy policy, refund policy |
-| `style.css` | All styling |
-| `img/` | Screenshots copied from the app repo's `docs/images/` (see `img/CREDITS.md`) |
+| `style.css` | All styling. Dark theme; the hero's raw-take timeline is pure CSS and stops under `prefers-reduced-motion` |
+| `fonts/` | Geist and Geist Mono (variable woff2), served from this site so no page calls a font CDN. SIL OFL 1.1, see `fonts/OFL.txt` |
+| `favicon.svg` | The site icon |
+| `img/` | Screenshots copied from the app repo's `docs/images/` (see `img/CREDITS.md`). The landing page crops them in CSS (`.crop` with `--x/--y/--w/--h` in pixels of the 1280x820 original) |
 | `worker/` | The Cloudflare Worker behind `dl.getreelstudio.com`: paid downloads, the update manifest, the release tool. Its own README |
 
 ## Publish on GitHub Pages
