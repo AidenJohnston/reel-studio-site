@@ -20,12 +20,14 @@
     <p id="plan-line">Thanks for paying for Reel Studio. It funds development. Your receipt is on its way by email.</p>
 
     <h2>1. Download the app</h2>
-    <div class="downloads">
-      <a class="btn" id="dl-win" href="https://github.com/AidenJohnston/reel-studio-app/releases/latest/download/Reel-Studio-Setup-0.1.2-x64.exe">Download now<small>Windows 10/11, 64-bit (.exe)</small></a>
-      <a class="btn" id="dl-mac" href="https://github.com/AidenJohnston/reel-studio-app/releases/latest/download/Reel-Studio-0.1.2-arm64.dmg">Download now<small>Apple silicon, macOS 14+ (.dmg)</small></a>
+    <div class="downloads" id="downloads">
+      <p class="muted" id="dl-status">Getting your download ready…</p>
+      <a class="btn" id="dl-win" href="#" hidden>Download now<small>Windows 10/11, 64-bit (.exe)</small></a>
+      <a class="btn" id="dl-mac" href="#" hidden>Download now<small>Apple silicon, macOS 14+ (.dmg)</small></a>
       <p class="alt-dl" id="dl-alt"></p>
     </div>
-    <p class="muted small">Both buttons open the latest release on GitHub. Pick <code>Reel-Studio-&lt;version&gt;-arm64.dmg</code> for a Mac or <code>Reel-Studio-Setup-&lt;version&gt;-x64.exe</code> for Windows. On a Mac, drag Reel Studio into Applications and open it. On Windows, if a blue "Windows protected your PC" box appears, click <strong>More info</strong>, then <strong>Run anyway</strong>. The first time it opens, the app downloads its speech model once; keep the window open until the bar finishes.</p>
+    <p class="muted small" id="dl-help" hidden>On a Mac, drag Reel Studio into Applications and open it. On Windows, if a blue "Windows protected your PC" box appears, click <strong>More info</strong>, then <strong>Run anyway</strong>. The first time it opens, the app downloads its speech model once; keep the window open until the bar finishes.</p>
+    <p class="muted small" id="dl-keep" hidden>Keep this page: the link is yours and works for new versions too. Lost it? <a href="update.html">Get a fresh link</a> with the email you paid with.</p>
 
     <h2>2. Connect your own AI</h2>
     <p>Reel Studio's AI editor runs on your own paid Claude or ChatGPT plan. Setting it up takes three steps:</p>
@@ -58,41 +60,34 @@
   </div>
 </footer>
 
+<script src="downloads.js"></script>
 <script>
-// Show one "Download now" for the visitor's own system; offer the other one as a small link.
 (function () {
-  var mac = /Mac|iPhone|iPad/.test(navigator.platform) || /Macintosh/.test(navigator.userAgent);
-  var hide = document.getElementById(mac ? 'dl-win' : 'dl-mac');
-  var alt = document.getElementById('dl-alt');
-  if (hide && alt) {
-    hide.style.display = 'none';
-    alt.innerHTML = (mac ? 'On Windows instead? ' : 'On a Mac instead? ') + '<a href="' + hide.href + '" id="dl-alt-link">Download for ' + (mac ? 'Windows' : 'Mac') + '</a>.';
+  var params = new URLSearchParams(location.search);
+  var plan = params.get('plan');
+  var line = document.getElementById('plan-line');
+  if (plan === 'monthly') {
+    line.textContent = 'Thanks for subscribing to Reel Studio for $20 a month. It funds development. Your receipt is on its way by email.';
+    document.getElementById('portal-line').hidden = false;
+  } else if (plan === 'once') {
+    line.textContent = 'Thanks for buying Reel Studio. Your $99 license covers this version and every 1.x update, and it funds development. Your receipt is on its way by email.';
   }
+
+  // Stripe sends the buyer here with ?session_id={CHECKOUT_SESSION_ID}. The download server confirms the
+  // payment and answers links that carry a signed code for this purchase (no account, no cookie).
+  var sessionId = params.get('session_id');
+  var remembered = ReelDownloads.remembered();
+  var query = sessionId ? 'session_id=' + encodeURIComponent(sessionId) : remembered ? 'token=' + encodeURIComponent(remembered) : null;
+  if (!query) {
+    ReelDownloads.fail('This page needs the link Stripe sent you to after paying. <a href="update.html">Get your download link</a> with the email you paid with.');
+    return;
+  }
+  ReelDownloads.claim(query, {
+    unpaid: 'Your payment has not come through yet. If you just paid, wait a few seconds and <a href="javascript:location.reload()">reload this page</a>. Otherwise email <a href="mailto:support@getreelstudio.com">support@getreelstudio.com</a>.',
+    unknown: 'We could not find a payment for this page. If you just paid, wait a few seconds and <a href="javascript:location.reload()">reload this page</a>. Otherwise email <a href="mailto:support@getreelstudio.com">support@getreelstudio.com</a> with your receipt.',
+    busy: 'The download server is busy. Try again in a minute, or email <a href="mailto:support@getreelstudio.com">support@getreelstudio.com</a> with your receipt and we will send your link.'
+  });
 })();
-
-// Point the download buttons at the newest installer files. Falls back to the pinned 0.1.2 links above.
-fetch('https://api.github.com/repos/AidenJohnston/reel-studio-app/releases/latest')
-  .then(function (r) { return r.ok ? r.json() : null; })
-  .then(function (rel) {
-    if (!rel || !rel.assets) return;
-    rel.assets.forEach(function (a) {
-      if (/\.dmg$/.test(a.name)) document.getElementById('dl-mac').href = a.browser_download_url;
-      if (/\.exe$/.test(a.name)) document.getElementById('dl-win').href = a.browser_download_url;
-      var altLink = document.getElementById('dl-alt-link'); var hidden = document.querySelector('.btn[style*="display: none"]'); if (altLink && hidden) altLink.href = hidden.href;
-    });
-  })
-  .catch(function () {});
-
-  (function () {
-    var plan = new URLSearchParams(location.search).get('plan');
-    var line = document.getElementById('plan-line');
-    if (plan === 'monthly') {
-      line.textContent = 'Thanks for subscribing to Reel Studio for $20 a month. It funds development. Your receipt is on its way by email.';
-      document.getElementById('portal-line').hidden = false;
-    } else if (plan === 'once') {
-      line.textContent = 'Thanks for buying Reel Studio. Your $99 license covers this version and every 1.x update, and it funds development. Your receipt is on its way by email.';
-    }
-  })();
 </script>
 </body>
 </html>

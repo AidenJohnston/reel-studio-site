@@ -16,7 +16,7 @@
 <main class="doc">
   <div class="wrap narrow">
     <h1>Privacy policy</h1>
-    <p class="muted">Last updated October 29, 2026</p>
+    <p class="muted">Last updated October 30, 2026</p>
     <p>This policy covers this website, your purchase, and the Reel Studio desktop app. Reel Studio is sold by Curate Technologies LLC ("we").</p>
 
     <h2>The short version</h2>
@@ -28,7 +28,8 @@
     </ul>
 
     <h2>This website</h2>
-    <p>This site is plain pages with no cookies, no analytics and no tracking scripts. It is hosted on GitHub Pages; GitHub may keep standard server logs (such as IP addresses) under its own privacy statement.</p>
+    <p>This site is plain pages with no cookies, no analytics and no tracking scripts. It is hosted on GitHub Pages; GitHub may keep standard server logs (such as IP addresses) under its own privacy statement. The download server (dl.getreelstudio.com) runs on Cloudflare, which may keep the same kind of logs.</p>
+    <p><strong>Your download link.</strong> After you pay, Stripe sends you to our thank-you page, which asks the download server to confirm the payment and answers a download link. The link carries a signed code that names your purchase (Stripe's checkout session), not you. We keep a record of the purchase: that session id, the plan, when it was made, and a keyed hash of the email you paid with (not the address itself), so we can send you a fresh link when you ask. The thank-you page remembers the code in your own browser's local storage so you can fetch new versions later; clear your browser storage to remove it.</p>
 
     <h2>When you buy</h2>
     <p>Payments are processed by Stripe. Stripe collects your card details and billing information under its own privacy policy; we never see your full card number. From Stripe we receive your name, email address, billing country, what you bought and your payment history with us. We use that to send receipts, handle refunds and subscriptions, answer support requests and keep the records the law requires. We don't sell it or use it for advertising.</p>
@@ -43,7 +44,7 @@
 
     <h2>Everything the app sends over the network, and why</h2>
     <ul>
-      <li><strong>Update check.</strong> At most once a day, a request to GitHub's public releases list to see if there's a newer version. It sends no account, cookie or ID. You can turn it off in Settings. Nothing is downloaded or installed automatically.</li>
+      <li><strong>Update check.</strong> At most once a day, a request to our download server (dl.getreelstudio.com, run on Cloudflare) to see if there's a newer version, and only if that fails, to GitHub's public releases list. It sends no account, cookie or ID. You can turn it off in Settings. Nothing is downloaded or installed automatically.</li>
       <li><strong>Speech model, on first run.</strong> A one-time download of the speech-recognition model from Hugging Face.</li>
       <li><strong>Pictures and icons, when the editor asks for them.</strong> Searches for b-roll pictures and brand icons go to Openverse, Wikimedia Commons, Wikidata, Wikipedia, TVmaze and jsDelivr (Simple Icons). They carry the search words and nothing else.</li>
       <li><strong>Links.</strong> If you paste a link to a picture, video or song, the app downloads it from that site. If the editor names a website or app in your reel, the app may take a screenshot of that public page.</li>
