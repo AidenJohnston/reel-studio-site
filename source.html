@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Open-source parts: Reel Studio</title>
-<meta name="description" content="The open-source programs inside Reel Studio, with their licences and complete source code.">
+<meta name="description" content="The open-source programs inside Reel Studio, with their licenses and complete source code.">
 <meta name="theme-color" content="#08080a">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="preload" href="fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin>
@@ -42,15 +42,15 @@
   <div class="wrap">
     <h1>Open-source parts inside Reel Studio</h1>
     <p class="doc-meta">Last updated October 30, 2026</p>
-    <p>Reel Studio uses open-source software, and each part keeps its own licence. This page is the source offer for the programs we build ourselves and ship in the installers: FFmpeg and FFprobe, plus the two libraries that open iPhone (HEIC) photos.</p>
+    <p>Reel Studio uses open-source software, and each part keeps its own license. This page is the source offer for the programs we build ourselves and ship in the installers: FFmpeg and FFprobe, plus the two libraries that open iPhone (HEIC) photos.</p>
 
     <h2>FFmpeg 7.1.1, build rs2 (GNU GPL v3)</h2>
-    <p>Reel Studio runs <code>ffmpeg</code> and <code>ffprobe</code> as separate programs to read, convert and render video. We compile them from the unmodified FFmpeg 7.1.1 source with the libraries below. Because they include x264 and are built with <code>--enable-gpl --enable-version3</code>, the two programs are licensed under the <a href="https://www.gnu.org/licenses/gpl-3.0.html">GNU General Public License, version 3</a>. A copy of the licence ships next to them in the app.</p>
+    <p>Reel Studio runs <code>ffmpeg</code> and <code>ffprobe</code> as separate programs to read, convert and render video. We compile them from the unmodified FFmpeg 7.1.1 source with the libraries below. Because they include x264 and are built with <code>--enable-gpl --enable-version3</code>, the two programs are licensed under the <a href="https://www.gnu.org/licenses/gpl-3.0.html">GNU General Public License, version 3</a>. A copy of the license ships next to them in the app.</p>
     <p><strong>The files below are the complete corresponding source for the FFmpeg and FFprobe programs shipped in the Reel Studio installers</strong>, for both Windows and macOS. We keep them online for as long as those builds are distributed. No account or purchase is needed to download them.</p>
 
     <h2>The programs, as shipped</h2>
     <div class="files-wrap"><table class="files">
-      <thead><tr><th>File</th><th>Licence</th><th>Size</th><th>SHA-256</th></tr></thead>
+      <thead><tr><th>File</th><th>License</th><th>Size</th><th>SHA-256</th></tr></thead>
       <tbody>
         <tr><td><a href="https://dl.getreelstudio.com/source/ffmpeg-7.1.1-rs2/ffmpeg-7.1.1-rs2-win-x64.zip">ffmpeg-7.1.1-rs2-win-x64.zip</a><span>FFmpeg and FFprobe for Windows x64, as shipped (with BUILDINFO.txt)</span></td><td>GPL v3</td><td>27.3 MB</td><td><code>08e0d8ebce07751f2b14de86d0a47594d39564af2439ce79f23121a12ffd2b7f</code></td></tr>
         <tr><td><a href="https://dl.getreelstudio.com/source/ffmpeg-7.1.1-rs2/ffmpeg-7.1.1-rs2-macos-arm64.zip">ffmpeg-7.1.1-rs2-macos-arm64.zip</a><span>FFmpeg and FFprobe for macOS (Apple silicon), as shipped (with BUILDINFO.txt)</span></td><td>GPL v3</td><td>23.5 MB</td><td><code>950d3faa4385a8a4eaa0d92baf8f6c043b8e9207a50a7d24e97935d68033bf45</code></td></tr>
@@ -60,7 +60,7 @@
 
     <h2>Source code</h2>
     <div class="files-wrap"><table class="files">
-      <thead><tr><th>File</th><th>Licence</th><th>Size</th><th>SHA-256</th></tr></thead>
+      <thead><tr><th>File</th><th>License</th><th>Size</th><th>SHA-256</th></tr></thead>
       <tbody>
         <tr><td><a href="https://dl.getreelstudio.com/source/ffmpeg-7.1.1-rs2/ffmpeg-7.1.1.tar.xz">ffmpeg-7.1.1.tar.xz</a><span>FFmpeg 7.1.1, the unmodified release source</span></td><td>GPL-2.0-or-later (built as GPL v3)</td><td>11.0 MB</td><td><code>733984395e0dbbe5c046abda2dc49a5544e7e0e1e2366bba849222ae9e3a03b1</code></td></tr>
         <tr><td><a href="https://dl.getreelstudio.com/source/ffmpeg-7.1.1-rs2/ffmpeg-7.1.1.tar.xz.asc">ffmpeg-7.1.1.tar.xz.asc</a><span>FFmpeg's own signature of that file</span></td><td>&ndash;</td><td>520 bytes</td><td><code>a52e92620b266ea341191a01b42a191e01c15a9f56e99b173582181781f5bc75</code></td></tr>
@@ -82,7 +82,7 @@
     <h2>HEIC photo support (GNU LGPL v3)</h2>
     <p>Reel Studio opens HEIC photos (the format iPhones use) through two libraries, libheif and libde265, licensed under the <a href="https://www.gnu.org/licenses/lgpl-3.0.html">GNU Lesser General Public License, version 3</a>. They ship as separate library files, decode only, and can be replaced.</p>
     <div class="files-wrap"><table class="files">
-      <thead><tr><th>File</th><th>Licence</th><th>Size</th><th>SHA-256</th></tr></thead>
+      <thead><tr><th>File</th><th>License</th><th>Size</th><th>SHA-256</th></tr></thead>
       <tbody>
         <tr><td><a href="https://dl.getreelstudio.com/source/ffmpeg-7.1.1-rs2/libheif-1.23.0.tar.gz">libheif-1.23.0.tar.gz</a><span>libheif 1.23.0</span></td><td>LGPL-3.0</td><td>2.1 MB</td><td><code>4c9182b18897617182eed12ab5eb9f9d855b3aa3a736d6bdb31abc034ec7d393</code></td></tr>
         <tr><td><a href="https://dl.getreelstudio.com/source/ffmpeg-7.1.1-rs2/libde265-1.1.0.tar.gz">libde265-1.1.0.tar.gz</a><span>libde265 1.1.0</span></td><td>LGPL-3.0</td><td>294 KB</td><td><code>afc19dd28e2fc523de5952bba5224ee1d28e286c72436d2843df126cca1181fd</code></td></tr>
@@ -92,7 +92,7 @@
 
     <h2>Checksums</h2>
     <div class="files-wrap"><table class="files">
-      <thead><tr><th>File</th><th>Licence</th><th>Size</th><th>SHA-256</th></tr></thead>
+      <thead><tr><th>File</th><th>License</th><th>Size</th><th>SHA-256</th></tr></thead>
       <tbody>
         <tr><td><a href="https://dl.getreelstudio.com/source/ffmpeg-7.1.1-rs2/SHA256SUMS.txt">SHA256SUMS.txt</a><span>SHA-256 of the source archives</span></td><td>&ndash;</td><td>1 KB</td><td><code>748a00a023cfdb9487a6b66e00866adde616d2535fcf12cfc7fa682b90c0ec4b</code></td></tr>
       </tbody>
@@ -100,10 +100,10 @@
     <p class="muted">Every file is also listed at <a href="https://dl.getreelstudio.com/source/ffmpeg-7.1.1-rs2/">dl.getreelstudio.com/source/ffmpeg-7.1.1-rs2/</a>. The SHA-256 values on this page are the ones to check a download against.</p>
 
     <h2>Everything else</h2>
-    <p>The other third-party parts of the app (Electron, Python, the Python and npm packages, the fonts and the face-detection model) are listed with their licences in <code>THIRD_PARTY.md</code>, which comes with every copy of Reel Studio in the <code>licenses</code> folder of the installed app, next to the full licence texts.</p>
+    <p>The other third-party parts of the app (Electron, Python, the Python and npm packages, the fonts and the face-detection model) are listed with their licenses in <code>THIRD_PARTY.md</code>, which comes with every copy of Reel Studio in the <code>licenses</code> folder of the installed app, next to the full license texts.</p>
 
     <h2>Questions</h2>
-    <p>If a link here stops working, or you have a question about these licences, email <a href="mailto:support@getreelstudio.com">support@getreelstudio.com</a>.</p>
+    <p>If a link here stops working, or you have a question about these licenses, email <a href="mailto:support@getreelstudio.com">support@getreelstudio.com</a>.</p>
   </div>
 </main>
 
