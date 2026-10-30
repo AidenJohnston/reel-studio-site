@@ -188,7 +188,7 @@ describe('POST /stripe/webhook', () => {
   })
   it('a wrong or stale signature is refused and records nothing', async () => {
     const w = world()
-    expect((await run(w, await signed(event(paidSession()), Math.floor(T0 / 1000), 'whsec_wrong_secret_xxxxxxxxxxxxxxxxxx'))).status).toBe(400)
+    expect((await run(w, await signed(event(paidSession()), Math.floor(T0 / 1000), 'test-wrong-webhook-secret-xxxxxxxxxxxxxxxxxx'))).status).toBe(400)
     expect((await run(w, await signed(event(paidSession()), Math.floor(T0 / 1000) - 3600))).status).toBe(400)
     expect((await run(w, req('/stripe/webhook', { method: 'POST', body: event(paidSession()) }))).status).toBe(400)
     expect(w.kv.store.has(`sess:${SID}`)).toBe(false)

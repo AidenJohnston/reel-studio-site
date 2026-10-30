@@ -93,7 +93,7 @@ export class FakeR2 {
 }
 
 export const SECRET = 'test-token-secret-with-plenty-of-bytes-0123456789'
-export const WHSEC = 'whsec_test_secret_with_plenty_of_bytes_0123456789'
+export const WHSEC = 'test-webhook-signing-secret-with-plenty-of-bytes-0123456789'
 export const STRIPE_KEY = 'rk_test_1234567890abcdefghijklmnop'
 
 export const MANIFEST = {

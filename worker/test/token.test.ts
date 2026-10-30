@@ -66,7 +66,7 @@ describe('emails', () => {
 })
 
 describe('Stripe webhook signatures', () => {
-  const secret = 'whsec_abcdefghijklmnopqrstuvwxyz'
+  const secret = 'test-webhook-secret-abcdefghijklmnopqrstuvwxyz'
   const body = '{"id":"evt_1","type":"checkout.session.completed"}'
   async function sig(t: number, s = secret) {
     const { hmac } = await import('../src/token')
@@ -80,7 +80,7 @@ describe('Stripe webhook signatures', () => {
   it('refuses a stale timestamp, a wrong secret, a changed body, or no header', async () => {
     const s = await sig(NOW)
     expect(await verifyStripeSignature(secret, `t=${NOW},v1=${s}`, body, NOW + 301)).toBe(false)
-    expect(await verifyStripeSignature('whsec_other_secret_xxxxxxxxxxxxxxx', `t=${NOW},v1=${s}`, body, NOW)).toBe(false)
+    expect(await verifyStripeSignature('test-other-webhook-secret-xxxxxxxxxxxxxxx', `t=${NOW},v1=${s}`, body, NOW)).toBe(false)
     expect(await verifyStripeSignature(secret, `t=${NOW},v1=${s}`, body + ' ', NOW)).toBe(false)
     expect(await verifyStripeSignature(secret, null, body, NOW)).toBe(false)
     expect(await verifyStripeSignature(secret, `t=${NOW}`, body, NOW)).toBe(false)
