@@ -1,4 +1,4 @@
-// Serves the static site (see wrangler.jsonc). www.getreelstudio.com redirects to getreelstudio.com, and every
+// Serves the static site (see wrangler.jsonc). www and plain http redirect to https://getreelstudio.com, and every
 // response gets the security headers GitHub Pages never sent.
 const APEX = 'getreelstudio.com'
 
@@ -14,8 +14,9 @@ const SECURITY_HEADERS = {
 export default {
   async fetch(request, env) {
     const url = new URL(request.url)
-    if (url.hostname === `www.${APEX}`) {
+    if (url.hostname === `www.${APEX}` || (url.hostname === APEX && url.protocol === 'http:')) {
       url.hostname = APEX
+      url.protocol = 'https:'
       return Response.redirect(url.toString(), 301)
     }
     const res = await env.ASSETS.fetch(request)
