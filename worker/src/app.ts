@@ -7,6 +7,7 @@
 //   GET  /d/<token>/<file>         the installer itself, streamed from R2 (resumable)
 //   POST /api/link  {email}        "email me my link" (always answers ok; sends only if we have a purchase)
 //   POST /stripe/webhook           checkout.session.completed → purchase record (signature checked)
+//   GET  /source/<release>/<file>  public, no token: the open-source parts' source (src/source.ts)
 //
 // No account, no cookie, no analytics. A purchase record is a session id, a plan, a keyed hash of the
 // buyer's email, and timestamps. Logs carry a short session id and a file name, nothing else.
@@ -15,6 +16,8 @@ import { linkEmail } from './email'
 import { fileByName, loadManifest, publicLatest, type Manifest, type ManifestFile } from './manifest'
 import { allow, clientIp } from './ratelimit'
 import { findByEmailHash, getPurchase, markReceipt, recordPurchase, type Purchase } from './records'
+import { streamObject } from './serve'
+import { handleSource } from './source'
 import { SESSION_ID_RE, fetchSession, sessionEmail, sessionIsPaid, sessionPlan, verifyStripeSignature, type StripeSession } from './stripe'
 import { TOKEN_DAYS, hashEmail, mintToken, normalizeEmail, verifyToken, type Plan } from './token'
 
@@ -53,6 +56,7 @@ export async function handle(request: Request, env: Env, ctx: ExecutionContext, 
     if (path === '/api/link' && request.method === 'POST') return await link(request, url, env, ctx, deps)
     if (path === '/stripe/webhook' && request.method === 'POST') return await webhook(request, env, ctx, deps)
     if (path.startsWith('/d/') && (request.method === 'GET' || request.method === 'HEAD')) return await download(request, url, env, deps)
+    if ((path === '/source' || path.startsWith('/source/')) && (request.method === 'GET' || request.method === 'HEAD')) return await handleSource(request, url, env.INSTALLERS)
     if (path.startsWith('/admin/')) return await handleAdmin(request, url, env, deps.now())
     if (path === '/' || path === '') return Response.redirect(`${env.SITE_ORIGIN}/`, 302)
     return json({ error: 'not found' }, 404, env)
@@ -179,32 +183,10 @@ async function download(request: Request, url: URL, env: Env, deps: Deps): Promi
     'X-Content-Type-Options': 'nosniff',
     'Accept-Ranges': 'bytes'
   })
-  if (request.method === 'HEAD') {
-    const head = await env.INSTALLERS.head(f.key)
-    if (!head) return json({ error: 'file missing' }, 404, env)
-    headers.set('Content-Length', String(head.size))
-    headers.set('ETag', head.httpEtag)
-    return new Response(null, { status: 200, headers })
-  }
-  const obj = await env.INSTALLERS.get(f.key, { range: request.headers, onlyIf: request.headers })
-  if (!obj) return json({ error: 'file missing' }, 404, env)
-  headers.set('ETag', obj.httpEtag)
-  if (!('body' in obj) || !obj.body) return new Response(null, { status: 304, headers })
-  const range = obj.range
-  let status = 200
-  if (range) {
-    const total = obj.size
-    const start = 'offset' in range && typeof range.offset === 'number' ? range.offset : 'suffix' in range && typeof range.suffix === 'number' ? Math.max(0, total - range.suffix) : 0
-    const len = 'length' in range && typeof range.length === 'number' ? range.length : total - start
-    const end = Math.min(total - 1, start + len - 1)
-    if (start > 0 || end < total - 1) {
-      status = 206
-      headers.set('Content-Range', `bytes ${start}-${end}/${total}`)
-      headers.set('Content-Length', String(end - start + 1))
-    } else headers.set('Content-Length', String(total))
-  } else headers.set('Content-Length', String(obj.size))
-  console.log(`[downloads] get ${f.name} ${c.p} ${shortSid(c.s)}${status === 206 ? ' (range)' : ''}`)
-  return new Response(obj.body, { status, headers })
+  const res = await streamObject(request, env.INSTALLERS, f.key, headers)
+  if (!res) return json({ error: 'file missing' }, 404, env)
+  if (request.method === 'GET' && res.status !== 304) console.log(`[downloads] get ${f.name} ${c.p} ${shortSid(c.s)}${res.status === 206 ? ' (range)' : ''}`)
+  return res
 }
 
 function notValid(env: Env): Response {

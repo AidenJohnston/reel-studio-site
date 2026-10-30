@@ -36,9 +36,17 @@ export class FakeR2 {
     const b = this.objects.get(key)
     return b ? { key, size: b.length, httpEtag: `"etag-${key}"` } : null
   }
-  async list(_opts?: { cursor?: string; limit?: number }) {
-    const objects = [...this.objects.entries()].map(([key, b]) => ({ key, size: b.length, httpEtag: `"etag-${key}"`, uploaded: new Date(0) }))
-    return { objects, truncated: false, cursor: undefined }
+  async list(opts?: { cursor?: string; limit?: number; prefix?: string; delimiter?: string }) {
+    const prefix = opts?.prefix ?? ''
+    const objects: { key: string; size: number; httpEtag: string; uploaded: Date }[] = []
+    const delimitedPrefixes = new Set<string>()
+    for (const [key, b] of this.objects.entries()) {
+      if (!key.startsWith(prefix)) continue
+      const cut = opts?.delimiter ? key.indexOf(opts.delimiter, prefix.length) : -1
+      if (cut >= 0) delimitedPrefixes.add(key.slice(0, cut + 1))
+      else objects.push({ key, size: b.length, httpEtag: `"etag-${key}"`, uploaded: new Date(0) })
+    }
+    return { objects, delimitedPrefixes: [...delimitedPrefixes], truncated: false, cursor: undefined }
   }
   async delete(key: string) {
     this.objects.delete(key)
