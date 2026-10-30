@@ -133,14 +133,14 @@ code { font-family: var(--mono); font-size: .88em; background: var(--surface-2);
 
 /* Phone mockup in the hero */
 .stage { position: relative; height: 560px; display: grid; place-items: center; }
-.phone { position: relative; width: 268px; aspect-ratio: 298 / 530; border-radius: 42px; padding: 10px; background: linear-gradient(160deg, #2a2a31, #121215 40%, #0c0c0e); box-shadow: 0 0 0 1px rgba(255, 255, 255, .09) inset, 0 0 0 1px #000, 0 50px 100px -20px rgba(124, 58, 237, .55), 0 30px 60px -30px rgba(0, 0, 0, .9); transform: rotate(3deg); animation: float 7s ease-in-out infinite; }
-.phone-screen { position: relative; width: 100%; height: 100%; border-radius: 33px; overflow: hidden; background: #f3d9c9; }
+.phone { position: relative; width: 268px; aspect-ratio: 9 / 16; border-radius: 42px; padding: 10px; background: linear-gradient(160deg, #2a2a31, #121215 40%, #0c0c0e); box-shadow: 0 0 0 1px rgba(255, 255, 255, .09) inset, 0 0 0 1px #000, 0 50px 100px -20px rgba(124, 58, 237, .55), 0 30px 60px -30px rgba(0, 0, 0, .9); transform: rotate(3deg); animation: float 7s ease-in-out infinite; }
+.phone-screen { position: relative; width: 100%; height: 100%; border-radius: 33px; overflow: hidden; background: #3a332c; }
+.phone-screen video { display: block; width: 100%; height: 100%; object-fit: cover; }
 .phone-screen img { position: absolute; max-width: none; width: calc(1280 / 298 * 100%); left: calc(-273 / 298 * 100%); top: calc(-62 / 530 * 100%); }
 .phone-screen::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0, 0, 0, .18), transparent 18%, transparent 75%, rgba(0, 0, 0, .35)); }
 .phone-notch { position: absolute; top: 10px; left: 50%; width: 76px; height: 22px; transform: translateX(-50%); background: #0a0a0b; border-radius: 0 0 14px 14px; z-index: 2; }
 .phone-progress { position: absolute; left: 16px; right: 16px; bottom: 16px; height: 3px; border-radius: 3px; background: rgba(255, 255, 255, .35); overflow: hidden; z-index: 2; }
-.phone-progress i { position: absolute; inset: 0; background: #fff; transform-origin: left; animation: play 10s linear infinite; }
-@keyframes play { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+.phone-progress i { position: absolute; inset: 0; background: #fff; transform-origin: left; transform: scaleX(0); }
 @keyframes float { 0%, 100% { transform: rotate(3deg) translateY(0); } 50% { transform: rotate(3deg) translateY(-10px); } }
 
 .chip { position: absolute; z-index: 3; display: inline-flex; align-items: center; gap: 9px; font-size: .84rem; color: var(--text); white-space: nowrap; background: rgba(20, 20, 24, .78); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); border: 1px solid var(--line-2); border-radius: 12px; padding: 9px 13px 9px 10px; box-shadow: 0 12px 30px -10px rgba(0, 0, 0, .7); opacity: 0; animation: chip-in .6s cubic-bezier(.2, .8, .2, 1) forwards; }
@@ -175,6 +175,7 @@ code { font-family: var(--mono); font-size: .88em; background: var(--surface-2);
 .lane.extra.l3 { animation-name: lane-in-3; }
 .sub { display: block; line-height: 30px; text-overflow: ellipsis; border-radius: 6px; padding: 0 8px; font-size: .7rem; font-weight: 600; letter-spacing: .03em; color: #0a0a0b; background: #f5f5f4; white-space: nowrap; overflow: hidden; min-width: 0; }
 .broll { display: block; line-height: 30px; text-overflow: ellipsis; border-radius: 6px; padding: 0 8px; font-size: .72rem; color: #fde68a; background: rgba(251, 191, 36, .14); box-shadow: 0 0 0 1px rgba(251, 191, 36, .4) inset; white-space: nowrap; overflow: hidden; min-width: 0; }
+.zoom { display: block; line-height: 30px; text-align: center; border-radius: 6px; padding: 0 6px; font-family: var(--mono); font-size: .68rem; color: #a5f3fc; background: rgba(34, 211, 238, .12); box-shadow: 0 0 0 1px rgba(34, 211, 238, .45) inset; white-space: nowrap; overflow: hidden; min-width: 0; }
 .music { flex: 1; border-radius: 6px; background: rgba(244, 114, 182, .12); box-shadow: 0 0 0 1px rgba(244, 114, 182, .4) inset; position: relative; overflow: hidden; }
 .music svg { position: absolute; inset: 6px 8px; width: calc(100% - 16px); height: calc(100% - 12px); }
 .spacer { flex: 0 0 4px; }
@@ -207,13 +208,14 @@ code { font-family: var(--mono); font-size: .88em; background: var(--surface-2);
   .phone-screen { border-radius: 29px; }
   .chip { font-size: .76rem; padding: 7px 10px 7px 8px; }
   .chip small { display: none; }
-  .chip.c1 { top: 40px; left: 0; } .chip.c2 { top: 170px; right: 0; } .chip.c3 { top: 300px; left: 0; } .chip.c4 { bottom: 34px; right: 0; }
+  .chip.c1 { top: 40px; left: 0; } .chip.c2 { top: 170px; right: 0; } .chip.c3 { display: none; } .chip.c4 { bottom: 34px; right: 0; }
+  .tl-title .more { display: none; }
   .badge { font-size: .8rem; }
   .hero .btn-row .btn { flex: 1 1 100%; }
   .timeline { padding: 14px 14px 18px; margin-top: 8px; }
   .clip span { display: none; }
   .clip { padding: 0; }
-  .sub, .broll { font-size: 0; padding: 0; }
+  .sub, .broll, .zoom { font-size: 0; padding: 0; }
   .tl-head { font-size: .7rem; }
   .tl-body { grid-template-columns: 1fr; gap: 4px; }
   .lane-label { margin-top: 8px; }

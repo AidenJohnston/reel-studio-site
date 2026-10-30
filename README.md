@@ -13,7 +13,7 @@ domain root or under a subpath such as `/reel-studio-site/`.
 | `style.css` | All styling. Dark theme; the hero's raw-take timeline is pure CSS and stops under `prefers-reduced-motion` |
 | `fonts/` | Geist and Geist Mono (variable woff2), served from this site so no page calls a font CDN. SIL OFL 1.1, see `fonts/OFL.txt` |
 | `favicon.svg` | The site icon |
-| `img/` | Screenshots copied from the app repo's `docs/images/` (see `img/CREDITS.md`). The landing page crops them in CSS (`.crop` with `--x/--y/--w/--h` in pixels of the 1280x820 original) |
+| `img/` | One real reel and the app photographed on it (see `img/CREDITS.md`); `hero-reel.mp4` is the muted loop in the hero phone. The landing page crops them in CSS (`.crop` with `--x/--y/--w/--h` in pixels of the 1280x820 original) |
 | `worker/` | The Cloudflare Worker behind `dl.getreelstudio.com`: paid downloads, the update manifest, the release tool. Its own README |
 
 ## Publish on GitHub Pages
