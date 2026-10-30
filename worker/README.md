@@ -25,6 +25,20 @@ tells the app whether a newer version is out. No account, no cookie, no analytic
 6. `GET /latest.json` is the tokenless manifest the app's update check reads: version, the page to open, and the
    file names, sizes and SHA-256 hashes. Cached five minutes.
 
+7. `GET /source/<release>/<file>` is public, no token: the corresponding source of the open-source programs
+   in the installers (FFmpeg and its libraries), from R2 keys under `source/` only. `/source/` and
+   `/source/<release>/` list them; https://getreelstudio.com/source.html says what each file is.
+
+## Publishing source files
+
+Source files are uploaded by hand, one folder per FFmpeg build (`source/ffmpeg-7.1.1-rs2/` today). A
+folder is never changed once published (the files are cached for a year); a new build gets a new folder,
+and the old one stays as long as an installer that bundles it is downloadable.
+
+```
+npx wrangler r2 object put reel-studio-installers/source/<release>/<file> --file <file> --content-type application/gzip --remote
+```
+
 ## Releasing a version
 
 The manifest lives in KV (`manifest`); the installers in R2 under `v<version>/`. Both are written by
