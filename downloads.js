@@ -20,7 +20,7 @@ var ReelDownloads = (function () {
   }
   function fail(html) {
     var s = document.getElementById('dl-status');
-    if (s) { s.innerHTML = html; s.hidden = false; }
+    if (s) { s.innerHTML = html; s.hidden = false; s.classList.remove('loading'); }
     show('dl-win', false); show('dl-mac', false);
   }
 

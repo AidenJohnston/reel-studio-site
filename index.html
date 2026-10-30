@@ -5,7 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Reel Studio: turn one raw take into a finished reel</title>
 <meta name="description" content="Reel Studio is a desktop app for Mac and Windows that turns one raw talking-head take into a finished short-form reel, using your own Claude or ChatGPT plan.">
+<meta name="theme-color" content="#08080a">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Reel Studio: raw take in, finished reel out">
+<meta property="og:description" content="A desktop app that keeps your best take, cuts the dead air, and adds captions, b-roll, music and a cover. Edited by the Claude or ChatGPT you already pay for.">
+<meta property="og:url" content="https://getreelstudio.com/">
+<meta property="og:image" content="https://getreelstudio.com/img/reel.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preload" href="fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="style.css">
+<script>document.documentElement.classList.add('js');</script>
 </head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
@@ -15,9 +25,10 @@
     <a class="brand" href="./"><span class="brand-mark" aria-hidden="true"></span>Reel Studio</a>
     <nav class="nav" aria-label="Main">
       <a href="#how">How it works</a>
-      <a href="#features">What you get</a>
+      <a href="#features">Features</a>
+      <a href="#pricing">Pricing</a>
       <a href="#faq">FAQ</a>
-      <a class="nav-buy" href="#pricing">Pricing</a>
+      <a class="btn sm" href="#pricing">Get Reel Studio</a>
     </nav>
   </div>
 </header>
@@ -25,128 +36,343 @@
 <main id="main">
 
 <section class="hero">
+  <div class="glow violet" aria-hidden="true"></div>
+  <div class="glow pink" aria-hidden="true"></div>
   <div class="wrap">
-    <h1>Turn one raw take into a finished reel.</h1>
-    <p class="lede">Drop in your talking-head video, flubs and retakes included. Reel Studio picks your best take, cuts the pauses, adds captions, b-roll, music and a cover, and hands you a reel ready to post.</p>
-    <p class="byo"><strong>You bring your own Claude or ChatGPT.</strong> Reel Studio drives the AI app you already pay for, on your own computer.</p>
-    <div class="btn-row">
-      <a class="btn" href="#pricing">Get Reel Studio</a>
-      <a class="btn secondary" href="https://github.com/AidenJohnston/reel-studio-app">See the source on GitHub</a>
+    <div class="hero-grid">
+      <div>
+        <a class="badge" href="#byo"><b>BYO AI</b> Runs on your own Claude or ChatGPT plan</a>
+        <h1>Raw take in.<br><span class="grad">Finished reel out.</span></h1>
+        <p class="lede">Drop in your talking-head video, flubs and retakes included. Reel Studio <strong>keeps your best take of every line</strong>, cuts the dead air, and adds captions, b-roll, music and a cover. Then you give notes in plain English.</p>
+        <div class="btn-row">
+          <a class="btn lg" href="#pricing">Get Reel Studio <span class="arrow" aria-hidden="true">&rarr;</span></a>
+          <a class="btn lg secondary" href="https://github.com/AidenJohnston/reel-studio-app">View the source</a>
+        </div>
+        <div class="hero-meta">
+          <span>Mac (Apple silicon) and Windows 10/11</span>
+          <span>$99 once or $20/month</span>
+          <span>14-day refund</span>
+        </div>
+      </div>
+
+      <div class="stage" aria-hidden="true">
+        <div class="phone">
+          <div class="phone-screen">
+            <video id="hero-reel" src="img/hero-reel.mp4" poster="img/hero-reel.jpg" width="540" height="960" autoplay muted loop playsinline preload="auto"></video>
+            <div class="phone-progress"><i></i></div>
+          </div>
+        </div>
+        <div class="chip c1"><span class="tick"></span>Kept your best takes <small>0:57 long</small></div>
+        <div class="chip c2"><span class="tick"></span>Added subtitles</div>
+        <div class="chip c3"><span class="tick"></span>Added 1 picture, 3 animations, 4 text cards</div>
+        <div class="chip c4"><span class="tick"></span>Wrote your post caption</div>
+      </div>
     </div>
-    <p class="muted small">Desktop app for Mac (Apple silicon) and Windows 10/11. Version 0.1.2.</p>
-    <figure class="hero-shot">
-      <img class="shot" src="img/reel.png" width="1280" height="820" alt="The Reel screen: a finished reel in a phone preview, a list of what Reel Studio did, and a box for notes to the editor">
-      <figcaption>A raw take became a reel with subtitles, music, pictures, text cards and a cover. Type a note and a new version appears next to the old one.</figcaption>
+
+    <figure class="timeline" aria-label="A real raw take on a timeline: a retake and the long pauses are cut, then subtitles, pictures and zooms are added. 1:39 in, 0:57 out.">
+      <div class="tl-head" aria-hidden="true">
+        <span class="tl-title"><span class="before">take01.mp4 &middot; 1:39<span class="more"> &middot; a retake and long pauses included</span></span><span class="after">CS jobs, explained &middot; Version 1 &middot; 0:57</span></span>
+        <span class="tl-dots"><i></i><i></i><i></i></span>
+      </div>
+      <div class="tl-body" aria-hidden="true">
+        <span class="lane-label">Video</span>
+        <div class="lane">
+          <div class="clip" style="flex:8 1 0"><span>This chart right here is why you&rsquo;re going to be homeless, jobless&hellip;</span></div>
+          <div class="clip cut" style="--g:3.1;flex:3.1 1 0"><span>pause 3.1 s</span></div>
+          <div class="clip" style="flex:4 1 0"><span>80% of the job offers go to the top 20%</span></div>
+          <div class="clip cut" style="--g:3.7;flex:3.7 1 0"><span>pause 3.7 s</span></div>
+          <div class="clip" style="flex:8 1 0"><span>Every one of us CS candidates would happily take any job&hellip;</span></div>
+          <div class="clip cut" style="--g:4.1;flex:4.1 1 0"><span>pause 4.1 s</span></div>
+          <div class="clip cut" style="--g:2.6;flex:2.6 1 0"><span>now this makes it so that the same 10 dudes,</span></div>
+          <div class="clip cut" style="--g:2.3;flex:2.3 1 0"><span>pause 2.3 s</span></div>
+          <div class="clip" style="flex:7 1 0"><span>now this makes it so that the same 10 dudes are hogging up all the offers</span></div>
+          <div class="clip cut" style="--g:3.8;flex:3.8 1 0"><span>pause 3.8 s</span></div>
+          <div class="clip" style="flex:5 1 0"><span>These dudes collect offers like Infinity Stones</span></div>
+        </div>
+        <span class="lane-label">Subtitles</span>
+        <div class="slot">
+          <div class="lane extra">
+            <div class="sub" style="flex:3 1 0">THIS CHART RIGHT</div>
+            <div class="spacer" style="flex:0.3 1 0"></div>
+            <div class="sub" style="flex:4 1 0">BE HOMELESS, JOBLESS</div>
+            <div class="spacer" style="flex:0.3 1 0"></div>
+            <div class="sub" style="flex:2 1 0">80% OF</div>
+            <div class="spacer" style="flex:0.3 1 0"></div>
+            <div class="sub" style="flex:2 1 0">GO TO THE</div>
+            <div class="spacer" style="flex:0.3 1 0"></div>
+            <div class="sub" style="flex:3 1 0">EVERY ONE OF</div>
+            <div class="spacer" style="flex:0.3 1 0"></div>
+            <div class="sub" style="flex:4 1 0">WOULD HAPPILY TAKE</div>
+            <div class="spacer" style="flex:0.3 1 0"></div>
+            <div class="sub" style="flex:4 1 0">HOGGING UP</div>
+            <div class="spacer" style="flex:0.3 1 0"></div>
+            <div class="sub" style="flex:4 1 0">INFINITY STONES</div>
+          </div>
+        </div>
+        <span class="lane-label">Pictures</span>
+        <div class="slot">
+          <div class="lane extra l2">
+            <div class="broll" style="flex:7 1 0">&ldquo;Why you&rsquo;ll end up jobless in CS&rdquo;</div>
+            <div class="spacer" style="flex:1 1 0"></div>
+            <div class="broll" style="flex:3.4 1 0">80% count-up</div>
+            <div class="spacer" style="flex:0.6 1 0"></div>
+            <div class="broll" style="flex:3 1 0">&ldquo;Six figures&rdquo;</div>
+            <div class="spacer" style="flex:1 1 0"></div>
+            <div class="broll" style="flex:5 1 0">Jane Street &middot; Citadel &middot; FAANG</div>
+            <div class="spacer" style="flex:3 1 0"></div>
+          </div>
+        </div>
+        <span class="lane-label">Zooms</span>
+        <div class="slot">
+          <div class="lane extra l3">
+            <div class="spacer" style="flex:2.5 1 0"></div>
+            <div class="zoom" style="flex:2 1 0">zoom</div>
+            <div class="spacer" style="flex:4 1 0"></div>
+            <div class="zoom" style="flex:2 1 0">zoom</div>
+            <div class="spacer" style="flex:5 1 0"></div>
+            <div class="zoom" style="flex:2 1 0">zoom</div>
+            <div class="spacer" style="flex:4 1 0"></div>
+            <div class="zoom" style="flex:2 1 0">zoom</div>
+            <div class="spacer" style="flex:2 1 0"></div>
+          </div>
+        </div>
+        <span class="playhead"></span>
+      </div>
+      <figcaption class="tl-foot">
+        <span class="legend" aria-hidden="true">
+          <span><i style="background:rgba(248,113,113,.5)"></i>Retake and long pauses, cut</span>
+          <span><i style="background:#a78bfa"></i>Your best take of every line</span>
+          <span><i style="background:#f5f5f4"></i>Subtitles</span>
+          <span><i style="background:#fbbf24"></i>Pictures, animations, text cards</span>
+          <span><i style="background:#22d3ee"></i>Zooms</span>
+        </span>
+        <span>A real reel: 1:39 raw take in, 0:57 out</span>
+      </figcaption>
     </figure>
   </div>
 </section>
 
-<section id="how">
+<section class="facts" aria-label="At a glance">
+  <ul class="wrap">
+    <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 16V7a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v9m16 0H4m16 0 1.28 2.55a1 1 0 0 1-.9 1.45H3.62a1 1 0 0 1-.9-1.45L4 16"/></svg><div><strong>Renders on your computer</strong>Your videos are not uploaded.</div></li>
+    <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg><div><strong>No account, no tracking</strong>No sign-up, analytics or telemetry.</div></li>
+    <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.9 5.8L20 11l-6.1 2.2L12 19l-1.9-5.8L4 11l6.1-2.2z"/><path d="M19 3v4M21 5h-4"/></svg><div><strong>Your own AI</strong>The Claude or ChatGPT plan you have.</div></li>
+    <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg><div><strong>Open source</strong>MIT licensed, on GitHub.</div></li>
+  </ul>
+</section>
+
+<section class="section" id="how">
   <div class="wrap">
-    <h2>How it works</h2>
+    <div class="section-head reveal">
+      <span class="kicker">How it works</span>
+      <h2>Film it once. Post it today.</h2>
+      <p>No timeline to learn. You talk, Reel Studio edits, you say what to change.</p>
+    </div>
     <ol class="steps">
-      <li>
+      <li class="reveal">
         <h3>Drop in your take</h3>
         <p>Record yourself talking on your phone or camera, retakes and all, and drop the file into Reel Studio.</p>
       </li>
-      <li>
+      <li class="reveal">
         <h3>It edits the reel</h3>
         <p>It listens, keeps your best take of every line, cuts the dead air, and adds captions, b-roll, your music and a cover.</p>
       </li>
-      <li>
-        <h3>Review in plain English</h3>
-        <p>Type notes like "music too loud at the start", or attach a picture to the words it belongs on. Then export, or send it to your phone.</p>
+      <li class="reveal">
+        <h3>Give notes in plain English</h3>
+        <p>Type &ldquo;music too loud at the start&rdquo; and a new version appears. Then export, or send it to your phone.</p>
       </li>
     </ol>
   </div>
 </section>
 
-<section id="features">
+<section class="section" id="features" style="padding-top:0">
   <div class="wrap">
-    <h2>What you get</h2>
-    <ul class="features">
-      <li>Your best take of every line, picked for you</li>
-      <li>Pauses, flubs and false starts cut out</li>
-      <li>Captions timed to your words, with measured sync</li>
-      <li>B-roll pictures and text cards on the words they belong to</li>
-      <li>Your own music mixed under your voice</li>
-      <li>A cover frame, and a post caption with hashtags</li>
-      <li>Review notes in plain English, with pictures, GIFs or clips attached</li>
-      <li>Every change saved as a new version, side by side with the last</li>
-      <li>"Edit it myself" tabs for the cut, subtitles, music, pictures and cover</li>
-      <li>Send to Phone over your Wi-Fi</li>
-      <li>Everything renders on your computer; your videos are not uploaded</li>
-      <li>Open source under the MIT license</li>
-    </ul>
-
-    <div class="gallery">
-      <figure>
-        <img class="shot" src="img/home.png" width="1280" height="820" loading="lazy" alt="Your videos: each finished reel as a card with its cover">
-        <figcaption>Your videos. Drop in a raw take and it shows up here with its cover when it is ready.</figcaption>
-      </figure>
-      <figure>
-        <img class="shot" src="img/drawer-cut.png" width="1280" height="820" loading="lazy" alt="The Cut tab: the transcript with the cut words crossed out">
-        <figcaption>The cut: your words, the cut ones crossed out. Click one to bring it back.</figcaption>
-      </figure>
-      <figure>
-        <img class="shot" src="img/drawer-pictures.png" width="1280" height="820" loading="lazy" alt="The Pictures tab: each picture or text card and the words it appears on">
-        <figcaption>Pictures: every picture and text card, and the words it appears on.</figcaption>
-      </figure>
-      <figure>
-        <img class="shot" src="img/export.png" width="1280" height="820" loading="lazy" alt="The export screen: the saved video, its post caption with a copy button, and ways to send it to a phone">
-        <figcaption>Export saves the video with its post caption ready to copy, and can send it to your phone.</figcaption>
-      </figure>
+    <div class="section-head reveal">
+      <span class="kicker">What you get</span>
+      <h2>Everything a reel needs.<br><span class="grad">None of the editing.</span></h2>
+      <p>Every step is done for you, and every step is yours to change.</p>
     </div>
-    <p class="muted small" style="margin-top:20px">The demo reel in these pictures uses a cartoon presenter, a synthetic voice and a synthesised song, all made for the project.</p>
+
+    <div class="bento">
+      <article class="card wide split reveal">
+        <div class="card-copy">
+          <h3>Your best take, picked</h3>
+          <p>It hears every retake and keeps your best one of each line. Pauses, flubs and false starts are cut. Click a crossed-out word to bring it back.</p>
+        </div>
+        <div class="card-art">
+          <div class="window"><div class="crop" style="--x:661;--y:276;--w:619;--h:470"><img src="img/drawer-cut.png" width="1280" height="820" loading="lazy" alt="The Cut tab: the transcript take by take, with a retake crossed out"></div></div>
+        </div>
+      </article>
+
+      <article class="card reveal">
+        <div class="card-copy">
+          <h3>Notes in plain English</h3>
+          <p>Tell your editor what to change. Attach a picture, GIF or clip to the words it belongs on.</p>
+        </div>
+        <div class="art">
+          <div class="chat" aria-hidden="true">
+            <div class="bubble ai">I cut the retake and the long pauses so it moves fast, and kept your &ldquo;oops, dating chart&rdquo; ending as the punchline.</div>
+            <div class="composer"><span>Put this on &ldquo;Jane Street&rdquo;</span><span class="attach"><i></i>logo.png</span><span class="send"></span></div>
+          </div>
+        </div>
+      </article>
+
+      <article class="card reveal">
+        <div class="card-copy">
+          <h3>Every change is a new version</h3>
+          <p>Side by side with the last one, so nothing you liked is lost.</p>
+        </div>
+        <div class="art">
+          <div class="versions" aria-hidden="true">
+            <div class="ver"><b>V1</b>The first cut</div>
+            <div class="ver"><b>V2</b>MIT picture a little earlier</div>
+            <div class="ver now"><b>V3</b>Bigger subtitles, moved up</div>
+          </div>
+        </div>
+      </article>
+
+      <article class="card wide split reveal">
+        <div class="card-copy">
+          <h3>B-roll on the right words</h3>
+          <p>Pictures, animations and text cards pop up on the words they belong to. The editor finds or makes them, or you add your own.</p>
+        </div>
+        <div class="card-art">
+          <div class="window"><div class="crop" style="--x:661;--y:180;--w:619;--h:560"><img src="img/drawer-pictures.png" width="1280" height="820" loading="lazy" alt="The Pictures tab: each text card and animation and the words it appears on"></div></div>
+        </div>
+      </article>
+
+      <article class="card reveal">
+        <div class="card-copy">
+          <h3>Ready to post</h3>
+          <p>A cover, a post caption with hashtags to copy, and Send to Phone over your Wi-Fi.</p>
+        </div>
+        <div class="card-art" style="min-height:230px">
+          <div class="window center"><div class="crop" style="--x:358;--y:128;--w:564;--h:360"><img src="img/export.png" width="1280" height="820" loading="lazy" alt="The export screen: the saved video, its post caption with a copy button, and Send to my phone"></div></div>
+        </div>
+      </article>
+
+      <article class="card reveal">
+        <div class="card-copy">
+          <h3>Private by design</h3>
+          <p>Transcribing, cutting and rendering all happen on your computer.</p>
+        </div>
+        <div class="art">
+          <div aria-hidden="true">
+            <ul>
+              <li><span class="tick"></span>Your videos stay on your computer</li>
+              <li><span class="no"></span>No analytics or telemetry</li>
+              <li><span class="no"></span>No crash reports</li>
+              <li><span class="no"></span>No Reel Studio account</li>
+            </ul>
+          </div>
+        </div>
+      </article>
+
+      <article class="card reveal">
+        <div class="card-copy">
+          <h3>Open source</h3>
+          <p>Every line is on GitHub under the MIT license. Read it, change it, build it yourself.</p>
+        </div>
+        <div class="art">
+          <div aria-hidden="true">
+<pre><span class="p">$</span> git clone github.com/AidenJohnston/
+    reel-studio-app
+<span class="ok">&check;</span> MIT license
+<span class="ok">&check;</span> Mac and Windows
+<span class="ok">&check;</span> No account, no telemetry</pre>
+          </div>
+        </div>
+      </article>
+    </div>
+
+    <ul class="also" style="margin-top:56px">
+      <li class="reveal"><span class="tick"></span>Captions timed to your words, with measured sync</li>
+      <li class="reveal"><span class="tick"></span>Your own music mixed under your voice</li>
+      <li class="reveal"><span class="tick"></span>A cover frame, and a post caption with hashtags</li>
+      <li class="reveal"><span class="tick"></span>&ldquo;Edit it myself&rdquo; tabs for the cut, subtitles, music, pictures and cover</li>
+      <li class="reveal"><span class="tick"></span>Send to Phone over your Wi-Fi</li>
+      <li class="reveal"><span class="tick"></span>Works without an AI too, with fewer features</li>
+    </ul>
+    <p class="demo-note">Everything on this page is one real reel made with Reel Studio: a 1:39 raw take in, a 0:57 reel out.</p>
   </div>
 </section>
 
-<section id="pricing">
+<section class="section" id="byo" style="padding-top:0">
+  <div class="wrap byo">
+    <div class="reveal">
+      <div class="section-head">
+        <span class="kicker">Bring your own AI</span>
+        <h2>Edited by the AI you already pay for.</h2>
+        <p>Reel Studio drives Anthropic's Claude Code app or OpenAI's Codex app on your computer, using the plan you already have.</p>
+      </div>
+      <div class="providers">
+        <div class="provider"><b>Claude</b><span>A paid Claude plan, through Anthropic's Claude Code app</span></div>
+        <div class="provider"><b>ChatGPT</b><span>A paid ChatGPT plan, through OpenAI's Codex app</span></div>
+      </div>
+      <p class="muted">You sign in on Anthropic's or OpenAI's own page, and Reel Studio never sees that login. If you don't have the app yet, Reel Studio installs the official one for you.</p>
+      <p class="fine">AI usage is not included in the price and counts against your plan's limits. Without an AI, Reel Studio still transcribes, cuts the pauses, adds captions and music, and makes a cover.</p>
+    </div>
+    <div class="byo-shot reveal">
+      <div class="crop" style="--x:360;--y:118;--w:560;--h:540"><img src="img/connect-ai.png" width="1280" height="820" loading="lazy" alt="Connect your AI editor: Connect Claude or Connect ChatGPT, use an API key, or skip it"></div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="pricing" style="padding-top:0">
+  <div class="glow violet" aria-hidden="true"></div>
   <div class="wrap">
-    <h2>Pricing</h2>
-    <p class="muted">Two ways to pay. Same app either way.</p>
+    <div class="section-head center reveal">
+      <span class="kicker">Pricing</span>
+      <h2>Pay once, or by the month.</h2>
+      <p>Same app either way. Your download link appears right after payment.</p>
+    </div>
     <div class="plans">
-      <div class="plan featured">
+      <div class="plan featured reveal">
+        <span class="plan-flag">One payment</span>
         <h3>Buy once</h3>
         <p class="price">$99 <span>once</span></p>
         <p class="tag">Perpetual license plus all 1.x updates.</p>
         <ul>
-          <li>Use the version you bought for as long as you like</li>
-          <li>Every 1.x update included</li>
-          <li>The signed installers and email help</li>
-          <li>14-day refund, no questions asked</li>
+          <li><span class="tick"></span>Use the version you bought for as long as you like</li>
+          <li><span class="tick"></span>Every 1.x update included</li>
+          <li><span class="tick"></span>The signed installers and email help</li>
+          <li><span class="tick"></span>14-day refund, no questions asked</li>
         </ul>
-        <a class="btn block" href="https://buy.stripe.com/28E3co5Ak1Hf1Ii6Ktc7u00">Buy for $99</a>
+        <a class="btn block lg" href="https://buy.stripe.com/28E3co5Ak1Hf1Ii6Ktc7u00">Buy for $99</a>
       </div>
-      <div class="plan">
+      <div class="plan reveal">
         <h3>Monthly</h3>
         <p class="price">$20 <span>/ month</span></p>
         <p class="tag">Cancel anytime, keep access through the paid month.</p>
         <ul>
-          <li>Every update while you subscribe</li>
-          <li>The signed installers and email help</li>
-          <li>Cancel online anytime from the link in your receipt email</li>
-          <li>First payment refundable within 14 days</li>
+          <li><span class="tick"></span>Every update while you subscribe</li>
+          <li><span class="tick"></span>The signed installers and email help</li>
+          <li><span class="tick"></span>Cancel online anytime from the link in your receipt email</li>
+          <li><span class="tick"></span>First payment refundable within 14 days</li>
         </ul>
-        <a class="btn block" href="https://buy.stripe.com/4gM00c9QA3PngDc8SBc7u01">Subscribe for $20/month</a>
+        <a class="btn block lg secondary" href="https://buy.stripe.com/4gM00c9QA3PngDc8SBc7u01">Subscribe for $20/month</a>
       </div>
     </div>
-    <p class="muted small" style="margin-top:16px">Payments are handled by Stripe. Your Claude or ChatGPT plan is billed separately by Anthropic or OpenAI. See the <a href="refund.html">refund policy</a> and <a href="terms.html">terms</a>.</p>
+    <p class="pricing-note">Payments are handled by Stripe. Your Claude or ChatGPT plan is billed separately by Anthropic or OpenAI. See the <a href="refund.html">refund policy</a> and <a href="terms.html">terms</a>.</p>
 
-    <div class="box" style="margin-top:36px">
+    <div class="needs reveal">
       <h3>What you need</h3>
       <ul>
-        <li><strong>A Mac or a Windows PC.</strong> A Mac with an Apple chip (M1 or newer) on macOS 14 or newer, or Windows 10/11 (64-bit). About 2 GB of free space.</li>
-        <li><strong>A paid Claude or ChatGPT plan.</strong> Reel Studio's AI editor runs on your own plan, through Anthropic's Claude Code app or OpenAI's Codex app. AI usage is not included in the price and counts against your plan's limits.</li>
-        <li><strong>That's it.</strong> Buy it and your download link appears right after payment; we can email it to you again anytime. The code is open source, so you can also build it yourself.</li>
+        <li><strong>A Mac or a Windows PC</strong>A Mac with an Apple chip (M1 or newer) on macOS 14 or newer, or Windows 10/11 (64-bit). About 2 GB of free space.</li>
+        <li><strong>A paid Claude or ChatGPT plan</strong>The AI editor runs on your own plan, through Anthropic's Claude Code app or OpenAI's Codex app. AI usage counts against your plan's limits.</li>
+        <li><strong>That's it</strong>Your download link appears right after payment, and we can email it to you again anytime. Or build it yourself from the open source code.</li>
       </ul>
     </div>
   </div>
 </section>
 
-<section id="faq">
-  <div class="wrap narrow">
-    <h2>Questions</h2>
+<section class="section" id="faq" style="padding-top:0">
+  <div class="wrap faq-grid">
+    <div class="section-head">
+      <span class="kicker">FAQ</span>
+      <h2>Questions</h2>
+      <p>Anything else? Email <a href="mailto:support@getreelstudio.com">support@getreelstudio.com</a>.</p>
+    </div>
     <div class="faq">
       <details>
         <summary>Is it really open source?</summary>
@@ -157,7 +383,7 @@
       <details>
         <summary>Then why pay?</summary>
         <div>
-          <p>Paying is how the app gets made. It gets you the signed, ready-to-run installers for Mac and Windows, every update, and email help when something goes wrong. The code is open source under the MIT license, so you can also build it yourself for free; buying is the easy path. Thanks for paying for this.</p>
+          <p>Paying is how the app gets made. It gets you the signed, ready-to-run installers for Mac and Windows, every update, and email help when something goes wrong. You can also build it yourself for free from the source; buying is the easy path. Thanks for paying for this.</p>
         </div>
       </details>
       <details>
@@ -194,9 +420,9 @@
         </div>
       </details>
       <details>
-        <summary>Windows says "Windows protected your PC". Is that safe?</summary>
+        <summary>Windows says &ldquo;Windows protected your PC&rdquo;. Is that safe?</summary>
         <div>
-          <p>That blue box appears for programs from small, new publishers that don't have Microsoft's paid "known publisher" stamp yet, and the Windows installer doesn't have one. Click <strong>More info</strong>, then <strong>Run anyway</strong>. You only do it once. Download the installer only from your getreelstudio.com download link. The Mac app is signed and notarized by Apple, so it opens with a double-click.</p>
+          <p>That blue box appears for programs from small, new publishers that don't have Microsoft's paid &ldquo;known publisher&rdquo; stamp yet, and the Windows installer doesn't have one. Click <strong>More info</strong>, then <strong>Run anyway</strong>. You only do it once. Download the installer only from your getreelstudio.com download link. The Mac app is signed and notarized by Apple, so it opens with a double-click.</p>
         </div>
       </details>
       <details>
@@ -209,11 +435,27 @@
   </div>
 </section>
 
+<section class="section" style="padding-top:0">
+  <div class="wrap">
+    <div class="cta reveal">
+      <h2>Your next reel is <span class="grad">one take away.</span></h2>
+      <p>Film it once, flubs and all. Reel Studio does the editing; you say what to change.</p>
+      <div class="btn-row">
+        <a class="btn lg" href="#pricing">Get Reel Studio <span class="arrow" aria-hidden="true">&rarr;</span></a>
+        <a class="btn lg secondary" href="#faq">Read the FAQ</a>
+      </div>
+    </div>
+  </div>
+</section>
+
 </main>
 
 <footer class="site-footer">
   <div class="wrap">
-    <span>Reel Studio is sold by Curate Technologies LLC.</span>
+    <div>
+      <a class="brand" href="./"><span class="brand-mark" aria-hidden="true"></span>Reel Studio</a>
+      <p>Reel Studio is sold by Curate Technologies LLC.</p>
+    </div>
     <nav aria-label="Footer">
       <a href="terms.html">Terms</a>
       <a href="privacy.html">Privacy</a>
@@ -223,5 +465,28 @@
     </nav>
   </div>
 </footer>
+
+<script>
+// The hero reel: a progress bar that follows the video, and no autoplay for people who asked for less motion.
+(function () {
+  var v = document.getElementById('hero-reel');
+  var bar = document.querySelector('.phone-progress i');
+  if (!v) return;
+  if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) { v.removeAttribute('autoplay'); v.pause(); return; }
+  (function tick() {
+    if (bar && v.duration) bar.style.transform = 'scaleX(' + (v.currentTime / v.duration) + ')';
+    requestAnimationFrame(tick);
+  })();
+})();
+// Fade sections in as they scroll into view. Without this script everything is simply visible.
+(function () {
+  var els = document.querySelectorAll('.reveal');
+  if (!('IntersectionObserver' in window)) { els.forEach(function (el) { el.classList.add('in'); }); return; }
+  var io = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
+  }, { rootMargin: '0px 0px -8% 0px', threshold: 0.08 });
+  els.forEach(function (el) { io.observe(el); });
+})();
+</script>
 </body>
 </html>

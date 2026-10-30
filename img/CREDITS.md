@@ -1,16 +1,17 @@
-# Screenshot credits
+# Screenshot and video credits
 
-The screenshots in this folder show Reel Studio editing a short demo video. Everything in that video was
-made for this project, so nothing in it needs a third-party licence:
+Everything in this folder shows one real reel, "CS jobs, explained", made with Reel Studio from a single raw take
+(1:39 in, 0:57 out). The presenter is Reel Studio's founder, who filmed it and agreed to its use here.
 
-| What | Where it came from | Licence |
-|---|---|---|
-| The presenter (a cartoon character, no real person) | Drawn frame by frame with a small Python script (Pillow) | CC0 1.0, dedicated to the public domain |
-| The voice | Synthetic speech from the speech engine that ships with Windows (Microsoft Zira), reading a short script written for this demo | No recording of any person; the script is CC0 1.0 |
-| The song, "Sunny Loop" | Synthesised from sine waves and noise with a small Python script (NumPy) | CC0 1.0 |
-| The three pictures on the reel (a glass of water, sunlight through curtains, a made bed) | Drawn with a small Python script (Pillow), then used by the editor as ordinary pictures | CC0 1.0 |
+| File | What |
+|---|---|
+| `hero-reel.mp4`, `hero-reel.jpg` | The first 9.5 seconds of the finished reel, muted, 540x960, and its first frame |
+| `reel.png`, `home.png`, `drawer-cut.png`, `drawer-pictures.png`, `export.png` | The app, photographed on that project |
+| `connect-ai.png` | The app's first-run "Connect your AI editor" screen (no footage) |
 
-The video, the pictures and the song are not stored in this repository, only screenshots of the app.
+In the reel:
 
-Reel Studio's own image search (Openverse and Wikimedia Commons) was not used for the demo, so no third-party
-photo appears in these screenshots.
+- The animations (the 77% to 80% count-up, the company list, the 400 count) and the text cards were made by Reel Studio itself.
+- The one photo is "Great Dome, MIT - IMG 8390.JPG" by Daderot, public domain, via Wikimedia Commons
+  (https://commons.wikimedia.org/wiki/File:Great_Dome,_MIT_-_IMG_8390.JPG), found by the app's picture search.
+- There is no music.
