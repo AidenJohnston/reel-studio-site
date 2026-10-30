@@ -14,7 +14,7 @@ import { handleAdmin } from './admin'
 import { linkEmail } from './email'
 import { fileByName, loadManifest, publicLatest, type Manifest, type ManifestFile } from './manifest'
 import { allow, clientIp } from './ratelimit'
-import { findByEmailHash, getPurchase, recordPurchase, type Purchase } from './records'
+import { findByEmailHash, getPurchase, markReceipt, recordPurchase, type Purchase } from './records'
 import { SESSION_ID_RE, fetchSession, sessionEmail, sessionIsPaid, sessionPlan, verifyStripeSignature, type StripeSession } from './stripe'
 import { TOKEN_DAYS, hashEmail, mintToken, normalizeEmail, verifyToken, type Plan } from './token'
 
@@ -51,7 +51,7 @@ export async function handle(request: Request, env: Env, ctx: ExecutionContext, 
     if (path === '/latest.json' && request.method === 'GET') return await latest(env)
     if (path === '/api/claim' && request.method === 'GET') return await claim(request, url, env, deps)
     if (path === '/api/link' && request.method === 'POST') return await link(request, url, env, ctx, deps)
-    if (path === '/stripe/webhook' && request.method === 'POST') return await webhook(request, env, deps)
+    if (path === '/stripe/webhook' && request.method === 'POST') return await webhook(request, env, ctx, deps)
     if (path.startsWith('/d/') && (request.method === 'GET' || request.method === 'HEAD')) return await download(request, url, env, deps)
     if (path.startsWith('/admin/')) return await handleAdmin(request, url, env, deps.now())
     if (path === '/' || path === '') return Response.redirect(`${env.SITE_ORIGIN}/`, 302)
@@ -229,28 +229,37 @@ async function link(request: Request, url: URL, env: Env, ctx: ExecutionContext,
   const email = normalizeEmail((body as { email?: unknown })?.email)
   if (!email) return json({ error: 'bad email' }, 400, env)
   if (delivery === 'email') {
-    const work = (async () => {
-      const hash = await hashEmail(secret, email)
-      const rec = await findByEmailHash(env.PURCHASES, hash)
-      const m = await loadManifest(env.PURCHASES)
-      if (!rec || !m) return
-      const { token } = await mintFor(secret, rec.sid, rec.plan, nowMs)
-      const files = filesWithLinks(m, url.origin, token)
-      const msg = linkEmail({ version: m.version, win: files.win, mac: files.mac, siteOrigin: env.SITE_ORIGIN, supportEmail: env.FROM_EMAIL })
-      try {
-        await env.EMAIL!.send({ to: email, from: { email: env.FROM_EMAIL, name: env.FROM_NAME }, replyTo: env.FROM_EMAIL, subject: msg.subject, text: msg.text, html: msg.html })
-        console.log(`[downloads] link emailed for ${shortSid(rec.sid)}`)
-      } catch (e) {
-        console.error(`[downloads] email failed: ${String((e as { code?: string })?.code ?? e)}`)
-      }
-    })()
-    ctx.waitUntil(work)
+    ctx.waitUntil(
+      (async () => {
+        const rec = await findByEmailHash(env.PURCHASES, await hashEmail(secret, email))
+        if (rec) await sendLinks(env, url.origin, secret, email, rec, 'resend', nowMs)
+      })()
+    )
   }
   return json({ ok: true, delivery }, 200, env)
 }
 
-/** Stripe → us. Records the purchase so the email form works even if the buyer never opened the thanks page. */
-async function webhook(request: Request, env: Env, deps: Deps): Promise<Response> {
+/** Mint fresh links for one purchase and email them. Never throws: a failed email is logged, nothing more. */
+async function sendLinks(env: Env, origin: string, secret: string, email: string, rec: Purchase, reason: 'receipt' | 'resend', nowMs: number): Promise<boolean> {
+  if (!env.EMAIL) return false
+  const m = await loadManifest(env.PURCHASES)
+  if (!m) return false
+  const { token } = await mintFor(secret, rec.sid, rec.plan, nowMs)
+  const files = filesWithLinks(m, origin, token)
+  const msg = linkEmail({ reason, plan: rec.plan, version: m.version, win: files.win, mac: files.mac, siteOrigin: env.SITE_ORIGIN, supportEmail: env.FROM_EMAIL })
+  try {
+    await env.EMAIL.send({ to: email, from: { email: env.FROM_EMAIL, name: env.FROM_NAME }, replyTo: env.FROM_EMAIL, subject: msg.subject, text: msg.text, html: msg.html })
+    console.log(`[downloads] ${reason} emailed for ${shortSid(rec.sid)}`)
+    return true
+  } catch (e) {
+    console.error(`[downloads] ${reason} email failed for ${shortSid(rec.sid)}: ${String((e as { code?: string })?.code ?? e)}`)
+    return false
+  }
+}
+
+/** Stripe → us. Records the purchase and emails the download links, so a buyer who closed the thanks page
+ * (or never reached it) still gets what they paid for. */
+async function webhook(request: Request, env: Env, ctx: ExecutionContext, deps: Deps): Promise<Response> {
   const whsec = secretOr503(env, 'STRIPE_WEBHOOK_SECRET')
   const secret = secretOr503(env, 'TOKEN_SECRET')
   if (!whsec || !secret) return json({ error: 'not configured' }, 503, env)
@@ -270,6 +279,16 @@ async function webhook(request: Request, env: Env, deps: Deps): Promise<Response
       const email = normalizeEmail(sessionEmail(s))
       const rec = await recordPurchase(env.PURCHASES, purchaseFromSession(s, email ? await hashEmail(secret, email) : null, 'webhook', nowMs))
       console.log(`[downloads] webhook ${type} ${shortSid(s.id)} ${rec.plan}`)
+      // The receipt with the links. Stripe retries a failed delivery, so the record above (first write wins)
+      // and the `receiptAt` mark keep a retried event from sending twice.
+      if (email && env.EMAIL && !rec.receiptAt) {
+        const origin = new URL(request.url).origin
+        ctx.waitUntil(
+          (async () => {
+            if (await sendLinks(env, origin, secret, email, rec, 'receipt', nowMs)) await markReceipt(env.PURCHASES, rec, nowMs)
+          })()
+        )
+      }
     } else console.log(`[downloads] webhook ${type} ${shortSid(s.id)} not paid (${s.payment_status ?? '?'})`)
   }
   return json({ received: true }, 200, env)

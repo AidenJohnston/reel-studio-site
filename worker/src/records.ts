@@ -13,6 +13,8 @@ export interface Purchase {
   /** When we wrote it (ms). */
   recordedAt: number
   source: 'claim' | 'webhook'
+  /** When the receipt email with the links went out (ms), if it did. */
+  receiptAt?: number
 }
 
 export interface RecordStore {
@@ -38,6 +40,11 @@ export async function recordPurchase(kv: RecordStore, p: Purchase): Promise<Purc
   if (!existing) await kv.put(`sess:${p.sid}`, JSON.stringify(p))
   if (p.emailHash) await kv.put(`email:${p.emailHash}`, p.sid)
   return existing ?? p
+}
+
+export async function markReceipt(kv: RecordStore, p: Purchase, nowMs: number): Promise<void> {
+  const current = (await getPurchase(kv, p.sid)) ?? p
+  await kv.put(`sess:${p.sid}`, JSON.stringify({ ...current, receiptAt: nowMs }))
 }
 
 export async function findByEmailHash(kv: RecordStore, hash: string): Promise<Purchase | null> {
