@@ -15,30 +15,27 @@ export class FakeKV {
   }
 }
 
-function parseRange(h: string | null, size: number): { offset: number; length: number } | null {
-  if (!h) return null
-  const m = /^bytes=(\d*)-(\d*)$/.exec(h.trim())
-  if (!m) return null
-  if (m[1] === '' && m[2] !== '') {
-    const suffix = Number(m[2])
-    return { offset: Math.max(0, size - suffix), length: Math.min(size, suffix) }
-  }
-  const start = Number(m[1])
-  const end = m[2] === '' ? size - 1 : Math.min(size - 1, Number(m[2]))
-  if (start > end) return null
-  return { offset: start, length: end - start + 1 }
-}
-
 export class FakeR2 {
   objects = new Map<string, Uint8Array>()
   multipart = new Map<string, { key: string; parts: Map<number, Uint8Array>; aborted?: boolean }>()
+  /** How many list() calls ran (each one is a billed R2 operation). */
+  lists = 0
   async head(key: string) {
     const b = this.objects.get(key)
     return b ? { key, size: b.length, httpEtag: `"etag-${key}"` } : null
   }
-  async list(_opts?: { cursor?: string; limit?: number }) {
-    const objects = [...this.objects.entries()].map(([key, b]) => ({ key, size: b.length, httpEtag: `"etag-${key}"`, uploaded: new Date(0) }))
-    return { objects, truncated: false, cursor: undefined }
+  async list(opts?: { cursor?: string; limit?: number; prefix?: string; delimiter?: string }) {
+    this.lists++
+    const prefix = opts?.prefix ?? ''
+    const objects: { key: string; size: number; httpEtag: string; uploaded: Date }[] = []
+    const delimitedPrefixes = new Set<string>()
+    for (const [key, b] of this.objects.entries()) {
+      if (!key.startsWith(prefix)) continue
+      const cut = opts?.delimiter ? key.indexOf(opts.delimiter, prefix.length) : -1
+      if (cut >= 0) delimitedPrefixes.add(key.slice(0, cut + 1))
+      else objects.push({ key, size: b.length, httpEtag: `"etag-${key}"`, uploaded: new Date(0) })
+    }
+    return { objects, delimitedPrefixes: [...delimitedPrefixes], truncated: false, cursor: undefined }
   }
   async delete(key: string) {
     this.objects.delete(key)
@@ -80,15 +77,33 @@ export class FakeR2 {
       }
     }
   }
-  async get(key: string, opts?: { range?: Headers; onlyIf?: Headers }) {
+  /** Like R2: `range` is an explicit {offset, length} (R2 throws if it is past the end); `onlyIf` honours
+   * If-None-Match, and also If-Match, as R2 does, so a test can see it never gets there. */
+  async get(key: string, opts?: { range?: { offset: number; length: number } | Headers; onlyIf?: Headers }) {
     const b = this.objects.get(key)
     if (!b) return null
     const etag = `"etag-${key}"`
     const inm = opts?.onlyIf?.get('if-none-match')
-    if (inm && inm === etag) return { key, size: b.length, httpEtag: etag, body: null }
-    const range = parseRange(opts?.range?.get('range') ?? null, b.length)
+    const im = opts?.onlyIf?.get('if-match')
+    if ((inm && inm === etag) || (im && im !== etag)) return { key, size: b.length, httpEtag: etag, body: null }
+    if (opts?.range instanceof Headers) throw new Error('the Worker must not hand R2 the raw Range header')
+    const range = opts?.range
+    if (range && (range.offset >= b.length || range.length <= 0)) throw new Error('InvalidRange: the requested range is not satisfiable')
     const slice = range ? b.slice(range.offset, range.offset + range.length) : b
-    return { key, size: b.length, httpEtag: etag, range: range ?? undefined, body: new Blob([slice]).stream() }
+    return { key, size: b.length, httpEtag: etag, range, body: new Blob([slice]).stream() }
+  }
+}
+
+/** The Workers Cache API (caches.default), in memory; honours nothing but presence. */
+export class FakeCache {
+  store = new Map<string, Response>()
+  async match(key: RequestInfo | URL): Promise<Response | undefined> {
+    const r = this.store.get(String(key instanceof Request ? key.url : key))
+    return r?.clone()
+  }
+  async put(key: RequestInfo | URL, res: Response): Promise<void> {
+    if (!/max-age=\d+/.test(res.headers.get('cache-control') ?? '')) throw new Error('not cacheable')
+    this.store.set(String(key instanceof Request ? key.url : key), res)
   }
 }
 
@@ -121,6 +136,7 @@ export interface World {
   emails: unknown[]
   waited: Promise<unknown>[]
   ctx: ExecutionContext
+  cache: FakeCache
   now: number
 }
 
@@ -141,6 +157,7 @@ export function world(opts: { manifest?: unknown; secrets?: boolean; email?: boo
     stripeReply: opts.stripe ?? (async () => new Response(JSON.stringify(paidSession()), { status: 200 })),
     emails,
     waited: [],
+    cache: new FakeCache(),
     now: T0,
     ctx: { waitUntil: (p: Promise<unknown>) => w.waited.push(p), passThroughOnException: () => {}, props: {} } as unknown as ExecutionContext,
     env: {
@@ -164,7 +181,8 @@ export function deps(w: World) {
       w.stripeCalls.push(`${init?.method ?? 'GET'} ${url} auth=${(init?.headers as Record<string, string>)?.Authorization ?? ''}`)
       return w.stripeReply()
     }) as typeof fetch,
-    now: () => w.now
+    now: () => w.now,
+    cache: w.cache as unknown as Cache
   }
 }
 
