@@ -1,0 +1,26 @@
+// getreelstudio.com: an assets Worker named "reel-studio-site" serving the files in this folder (the same setup as
+// the downloads Worker in worker/, which is a separate Worker on dl.getreelstudio.com). Publish from this folder:
+//
+//   npx wrangler deploy
+//
+// Merging to main does NOT publish; run the command above after a merge. .assetsignore keeps everything that is
+// not a page, a script, a font or an image off the site.
+{
+  "$schema": "worker/node_modules/wrangler/config-schema.json",
+  "name": "reel-studio-site",
+  "compatibility_date": "2026-10-01",
+  // site-worker.js runs on every request: it sends www to the bare domain and adds the security headers.
+  "main": "./site-worker.js",
+  "assets": {
+    "directory": "./",
+    "binding": "ASSETS",
+    "run_worker_first": true
+  },
+  // Custom domains make this Worker the origin for both hostnames; wrangler creates the DNS records and certificates.
+  "routes": [
+    { "pattern": "getreelstudio.com", "custom_domain": true },
+    { "pattern": "www.getreelstudio.com", "custom_domain": true }
+  ],
+  "workers_dev": true,
+  "observability": { "enabled": true }
+}

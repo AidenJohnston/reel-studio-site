@@ -1,7 +1,7 @@
 # Reel Studio sales site
 
 Static pages, one stylesheet, no build step, no external scripts. Every link is relative, so the site works at a
-domain root or under a subpath such as `/reel-studio-site/`.
+domain root or under a subpath.
 
 | File | What |
 |---|---|
@@ -14,18 +14,26 @@ domain root or under a subpath such as `/reel-studio-site/`.
 | `fonts/` | Geist and Geist Mono (variable woff2), served from this site so no page calls a font CDN. SIL OFL 1.1, see `fonts/OFL.txt` |
 | `favicon.svg` | The site icon |
 | `img/` | One real reel and the app photographed on it (see `img/CREDITS.md`); `hero-reel.mp4` is the muted loop in the hero phone. The landing page crops them in CSS (`.crop` with `--x/--y/--w/--h` in pixels of the 1280x820 original) |
+| `wrangler.jsonc`, `site-worker.js`, `.assetsignore` | How Cloudflare serves this site (see below) |
 | `worker/` | The Cloudflare Worker behind `dl.getreelstudio.com`: paid downloads, the update manifest, the release tool. Its own README |
 
-## Publish on GitHub Pages
+## Publish on Cloudflare
 
-1. Create a public repository and push this folder to its `main` branch.
-2. In the repository: Settings > Pages > Build and deployment > Source: **Deploy from a branch**, Branch: **main**,
-   folder **/ (root)**. Save.
-3. The site appears at `https://<user>.github.io/<repo>/` within a minute or two.
-4. Custom domain (later): Settings > Pages > Custom domain, save it first, then add the DNS records GitHub shows and
-   tick **Enforce HTTPS** once DNS resolves.
+The site is an assets-only Cloudflare Worker named `reel-studio-site` (config: `wrangler.jsonc`), on custom domains
+`getreelstudio.com` and `www.getreelstudio.com`. `site-worker.js` redirects www to the bare domain and adds the
+security headers; `.assetsignore` keeps `worker/`, the config and this README off the site.
 
-Preview locally with `python -m http.server 8000` in this folder and open `http://localhost:8000/`.
+Merging to `main` does not publish. After a merge, from this folder:
+
+```
+npx wrangler deploy
+```
+
+(`worker/node_modules/.bin/wrangler deploy` works too once `npm ci` has run in `worker/`.) Pages are served without
+the `.html`: `/thanks.html?…` redirects to `/thanks?…` with the query kept, so the Stripe redirect URLs and the
+app's `update.html` link keep working.
+
+Preview locally with `npx wrangler dev` (or `python -m http.server 8000`) in this folder.
 
 ## Stripe
 
