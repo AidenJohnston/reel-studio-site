@@ -188,13 +188,19 @@ async function main() {
     if (!sid) throw new Error('--sid cs_live_… is required')
     const r = await api('POST', '/admin/link', { sid, plan: arg('plan', 'once') })
     console.log(`${r.onFile ? 'on file' : 'NOT on file (links still work)'}, plan ${r.plan}, version ${r.version}\nMac:     ${r.mac}\nWindows: ${r.win}`)
+  } else if (cmd === 'forget') {
+    // The buyer asked us to delete their record: everything about this purchase goes now, and its links and
+    // automatic updates stop working. Stripe's own records are separate.
+    const sid = arg('sid')
+    if (!sid) throw new Error('--sid cs_live_… is required')
+    console.log(await api('DELETE', `/admin/purchase?sid=${encodeURIComponent(sid)}`))
   } else if (cmd === 'purchase') {
     // Support: does this purchase still get downloads and updates, and why not?
     const sid = arg('sid')
     if (!sid) throw new Error('--sid cs_live_… is required')
     console.log(JSON.stringify(await api('GET', `/admin/purchase?sid=${encodeURIComponent(sid)}`), null, 2))
   } else {
-    console.log('usage: publish.mjs list | upload --key K --file F | delete --key K | release --version V --win F --mac F [--mac-zip F] [--notes F] [--dry-run] | link --sid cs_live_… | purchase --sid cs_live_…')
+    console.log('usage: publish.mjs list | upload --key K --file F | delete --key K | release --version V --win F --mac F [--mac-zip F] [--notes F] [--dry-run] | link --sid cs_live_… | purchase --sid cs_live_… | forget --sid cs_live_…')
     process.exitCode = 2
   }
 }

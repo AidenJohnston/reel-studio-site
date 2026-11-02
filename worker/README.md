@@ -54,6 +54,12 @@ whether or not the purchase is on file yet, and an older event never overwrites 
 sends events in does not matter. Refunds and disputes of a monthly invoice are not tracked: the subscription's
 status decides. Support can see one purchase with `node tools/publish.mjs purchase --sid cs_live_…`.
 
+**Retention.** A record is kept while its purchase is entitled. When it stops being entitled, every KV key of
+that purchase (`sess:`, the `email:` pointer if it still points there, `sub:`/`subsess:`, `pay:`/`paysess:`) gets a
+90-day expiry; if it becomes entitled again the expiry is lifted. A buyer who asks to be deleted sooner:
+`node tools/publish.mjs forget --sid cs_live_…` (their links and updates stop). One-time purchases stay entitled,
+so their records stay until the buyer asks.
+
 ## Publishing source files
 
 Source files are uploaded by hand, one folder per FFmpeg build (`source/ffmpeg-7.1.1-rs2/` today). A

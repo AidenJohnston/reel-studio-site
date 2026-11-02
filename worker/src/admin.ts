@@ -11,8 +11,9 @@
 //   PUT    /admin/manifest        the manifest    checks every file is in R2 at the stated size, then publishes
 //   POST   /admin/link            {sid, plan?}    mint download links for one purchase (support: "resend my link")
 //   GET    /admin/purchase?sid=…                  the record and whether it is still entitled (support)
+//   DELETE /admin/purchase?sid=…                  delete everything about one purchase now (the buyer asked)
 import { MANIFEST_KEY, loadManifest, parseManifest, publicLatest, type ManifestFile } from './manifest'
-import { entitlement, getPaymentState, getPurchase, getSubscriptionState } from './records'
+import { entitlement, forgetPurchase, getPaymentState, getPurchase, getSubscriptionState } from './records'
 import { SESSION_ID_RE } from './stripe'
 import { TOKEN_DAYS, mintToken, timingSafeEqual } from './token'
 
@@ -79,6 +80,12 @@ export async function handleAdmin(request: Request, url: URL, env: AdminEnv, now
     const payment = rec.paymentIntent ? await getPaymentState(env.PURCHASES, rec.paymentIntent) : null
     const { emailHash: _hash, ...shown } = rec
     return json({ purchase: shown, subscription, payment, entitlement: await entitlement(env.PURCHASES, rec) })
+  }
+
+  if (path === '/admin/purchase' && method === 'DELETE') {
+    const sid = url.searchParams.get('sid') ?? ''
+    if (!SESSION_ID_RE.test(sid)) return json({ error: 'bad session id' }, 400)
+    return (await forgetPurchase(env.PURCHASES, sid)) ? json({ forgotten: sid }) : json({ error: 'not on file' }, 404)
   }
 
   if (path === '/admin/objects' && method === 'GET') {

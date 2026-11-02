@@ -6,6 +6,12 @@
 //   `sub:<subscription id>`    {status, at}             a monthly plan's subscription status
 //   `pay:<payment intent id>`  {refunded, dispute, at}  a one-time payment refunded or disputed
 // `entitlement()` reads them: is this purchase still entitled to downloads and updates?
+//
+// Retention (hub decisions/2026-11-02-purchase-record-retention.md): a record is kept while its purchase is
+// entitled. When it stops being entitled (subscription ended, refund, dispute), every key of that purchase gets a
+// 90-day expiry; if it becomes entitled again (resubscribed card, dispute won) the expiry is lifted. The buyer can
+// ask for deletion sooner (`forgetPurchase`, through /admin/purchase). `subsess:` and `paysess:` point from a
+// subscription or payment back to its session, so a Stripe event can find the record to expire.
 import type { Plan } from './token'
 
 export interface Purchase {
@@ -29,8 +35,12 @@ export interface Purchase {
 
 export interface RecordStore {
   get(key: string, type: 'text'): Promise<string | null>
-  put(key: string, value: string): Promise<void>
+  put(key: string, value: string, opts?: { expirationTtl?: number }): Promise<void>
+  delete(key: string): Promise<void>
 }
+
+/** How long a record outlives its entitlement. */
+export const RETENTION_DAYS = 90
 
 async function getJson<T>(kv: RecordStore, key: string): Promise<T | null> {
   const raw = await kv.get(key, 'text')
@@ -54,7 +64,12 @@ export async function recordPurchase(kv: RecordStore, p: Purchase): Promise<Purc
   const existing = await getPurchase(kv, p.sid)
   if (!existing) await kv.put(`sess:${p.sid}`, JSON.stringify(p))
   if (p.emailHash) await kv.put(`email:${p.emailHash}`, p.sid)
-  return existing ?? p
+  const rec = existing ?? p
+  if (rec.subscription) await kv.put(`subsess:${rec.subscription}`, rec.sid)
+  if (rec.paymentIntent) await kv.put(`paysess:${rec.paymentIntent}`, rec.sid)
+  // Stripe may have said "canceled" or "refunded" before this record existed.
+  await applyRetention(kv, rec.sid)
+  return rec
 }
 
 export async function markReceipt(kv: RecordStore, p: Purchase, nowMs: number): Promise<void> {
@@ -119,6 +134,49 @@ export async function updatePaymentState(kv: RecordStore, id: string, change: { 
 /** Dispute statuses that leave the buyer entitled: closed in the seller's favour, or an inquiry that closed
  * without becoming a chargeback. */
 const SETTLED_DISPUTES = new Set(['won', 'warning_closed'])
+
+/** Give every key of this purchase a RETENTION_DAYS expiry if it is no longer entitled, or lift the expiry if it
+ * is entitled (again). A KV put without an expiry makes the key permanent. Returns whether it now expires. */
+export async function applyRetention(kv: RecordStore, sid: string): Promise<boolean> {
+  const rec = await getPurchase(kv, sid)
+  if (!rec) return false
+  const expires = !(await entitlement(kv, rec)).ok
+  const opts = expires ? { expirationTtl: RETENTION_DAYS * 86400 } : undefined
+  const keep = async (key: string) => {
+    const v = await kv.get(key, 'text')
+    if (v !== null) await kv.put(key, v, opts)
+  }
+  await keep(`sess:${sid}`)
+  // The email pointer only if it still points here (a newer purchase by the same buyer keeps it).
+  if (rec.emailHash && (await kv.get(`email:${rec.emailHash}`, 'text')) === sid) await keep(`email:${rec.emailHash}`)
+  if (rec.subscription) {
+    await keep(`sub:${rec.subscription}`)
+    await keep(`subsess:${rec.subscription}`)
+  }
+  if (rec.paymentIntent) {
+    await keep(`pay:${rec.paymentIntent}`)
+    await keep(`paysess:${rec.paymentIntent}`)
+  }
+  return expires
+}
+
+/** The session behind a subscription or a payment, if the purchase is on file. */
+export async function sidFor(kv: RecordStore, ref: { subscription?: string; paymentIntent?: string }): Promise<string | null> {
+  if (ref.subscription) return kv.get(`subsess:${ref.subscription}`, 'text')
+  if (ref.paymentIntent) return kv.get(`paysess:${ref.paymentIntent}`, 'text')
+  return null
+}
+
+/** Delete everything we hold about one purchase now (the buyer asked). Its links and updates stop working. */
+export async function forgetPurchase(kv: RecordStore, sid: string): Promise<boolean> {
+  const rec = await getPurchase(kv, sid)
+  if (!rec) return false
+  if (rec.emailHash && (await kv.get(`email:${rec.emailHash}`, 'text')) === sid) await kv.delete(`email:${rec.emailHash}`)
+  if (rec.subscription) for (const k of [`sub:${rec.subscription}`, `subsess:${rec.subscription}`]) await kv.delete(k)
+  if (rec.paymentIntent) for (const k of [`pay:${rec.paymentIntent}`, `paysess:${rec.paymentIntent}`]) await kv.delete(k)
+  await kv.delete(`sess:${sid}`)
+  return true
+}
 
 export type Entitlement = { ok: true } | { ok: false; reason: 'refunded' | 'disputed' | 'subscription ended' }
 

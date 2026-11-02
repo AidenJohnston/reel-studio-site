@@ -25,7 +25,7 @@ import { handleAdmin } from './admin'
 import { linkEmail } from './email'
 import { fileByName, loadManifest, publicLatest, updateFile, updateFileByName, updateYml, type Manifest, type ManifestFile } from './manifest'
 import { allow, clientIp } from './ratelimit'
-import { PAYMENT_INTENT_ID_RE, SUBSCRIPTION_ID_RE, entitlement, findByEmailHash, getPurchase, markReceipt, recordPurchase, setSubscriptionState, updatePaymentState, type Purchase } from './records'
+import { PAYMENT_INTENT_ID_RE, SUBSCRIPTION_ID_RE, applyRetention, entitlement, findByEmailHash, getPurchase, markReceipt, recordPurchase, setSubscriptionState, sidFor, updatePaymentState, type Purchase } from './records'
 import { streamObject } from './serve'
 import { handleSource } from './source'
 import { SESSION_ID_RE, fetchSession, sessionEmail, sessionIsPaid, sessionPlan, verifyStripeSignature, type StripeSession } from './stripe'
@@ -388,17 +388,23 @@ async function webhook(request: Request, env: Env, ctx: ExecutionContext, deps: 
     if (typeof id === 'string' && SUBSCRIPTION_ID_RE.test(id) && status) {
       const applied = await setSubscriptionState(env.PURCHASES, id, status, at)
       console.log(`[downloads] webhook ${type} ${id.slice(0, 8)}… ${status}${applied ? '' : ' (older than what we have: ignored)'}`)
+      const sid = await sidFor(env.PURCHASES, { subscription: id })
+      if (applied && sid) await applyRetention(env.PURCHASES, sid)
     }
   } else if (type === 'charge.refunded') {
     // Only a full refund ends the purchase; a partial one is a goodwill gesture.
     if (pi && o?.refunded === true) {
       await updatePaymentState(env.PURCHASES, pi, { refunded: true }, at)
       console.log(`[downloads] webhook ${type} ${pi.slice(0, 7)}… refunded in full`)
+      const sid = await sidFor(env.PURCHASES, { paymentIntent: pi })
+      if (sid) await applyRetention(env.PURCHASES, sid)
     }
   } else if (type === 'charge.dispute.created' || type === 'charge.dispute.updated' || type === 'charge.dispute.closed') {
     if (pi && status) {
       await updatePaymentState(env.PURCHASES, pi, { dispute: status }, at)
       console.log(`[downloads] webhook ${type} ${pi.slice(0, 7)}… ${status}`)
+      const sid = await sidFor(env.PURCHASES, { paymentIntent: pi })
+      if (sid) await applyRetention(env.PURCHASES, sid)
     }
   }
   return json({ received: true }, 200, env)

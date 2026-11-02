@@ -304,3 +304,63 @@ describe('admin', () => {
     expect(JSON.stringify(b)).not.toContain('emailHash')
   })
 })
+
+describe('retention: a record outlives its entitlement by 90 days', () => {
+  const DAYS90 = 90 * 86400
+  const keysOf = (w: ReturnType<typeof world>) => [...w.kv.store.keys()].filter((k) => !k.startsWith('rl:') && k !== 'manifest')
+  it('a cancelled subscription: every key of the purchase expires in 90 days; resubscribing lifts it', async () => {
+    const w = updWorld()
+    await monthly(w)
+    await send(w, 'customer.subscription.created', { id: SUB, status: 'active' })
+    expect(w.kv.ttl.size).toBe(0)
+    await send(w, 'customer.subscription.deleted', { id: SUB, status: 'canceled' }, nowSec + 10)
+    const keys = keysOf(w)
+    expect(keys.sort()).toEqual([`email:${JSON.parse(w.kv.store.get(`sess:${SID}`)!).emailHash}`, `sess:${SID}`, `sub:${SUB}`, `subsess:${SUB}`].sort())
+    for (const k of keys) expect(w.kv.ttl.get(k)).toBe(DAYS90)
+    await send(w, 'customer.subscription.updated', { id: SUB, status: 'active' }, nowSec + 20)
+    expect(w.kv.ttl.size).toBe(0)
+  })
+  it('a refund expires the one-time purchase; a won dispute keeps it', async () => {
+    const w = updWorld()
+    await once(w)
+    await send(w, 'charge.dispute.created', { payment_intent: PI, status: 'needs_response' })
+    expect(w.kv.ttl.get(`sess:${SID}`)).toBe(DAYS90)
+    await send(w, 'charge.dispute.closed', { payment_intent: PI, status: 'won' }, nowSec + 5)
+    expect(w.kv.ttl.has(`sess:${SID}`)).toBe(false)
+    await send(w, 'charge.refunded', { payment_intent: PI, refunded: true }, nowSec + 9)
+    expect(w.kv.ttl.get(`sess:${SID}`)).toBe(DAYS90)
+    expect(w.kv.ttl.get(`pay:${PI}`)).toBe(DAYS90)
+  })
+  it('the event before the record: the record is born expiring', async () => {
+    const w = updWorld()
+    await send(w, 'customer.subscription.deleted', { id: SUB, status: 'canceled' })
+    await monthly(w)
+    expect(w.kv.ttl.get(`sess:${SID}`)).toBe(DAYS90)
+  })
+  it('an active one-time purchase never expires', async () => {
+    const w = updWorld()
+    await once(w)
+    expect(w.kv.ttl.size).toBe(0)
+  })
+  it('the email pointer of a newer purchase is left alone', async () => {
+    const w = updWorld()
+    await monthly(w)
+    const hash = JSON.parse(w.kv.store.get(`sess:${SID}`)!).emailHash
+    const NEWER = 'cs_live_newerSessionWithPlentyOfChars0000000000'
+    await send(w, 'checkout.session.completed', paidSession({ id: NEWER, mode: 'subscription', subscription: 'sub_1NewerSubscription00' }))
+    expect(w.kv.store.get(`email:${hash}`)).toBe(NEWER)
+    await send(w, 'customer.subscription.deleted', { id: SUB, status: 'canceled' }, nowSec + 10)
+    expect(w.kv.ttl.has(`email:${hash}`)).toBe(false)
+    expect(w.kv.ttl.get(`sess:${SID}`)).toBe(DAYS90)
+  })
+  it('forget (the buyer asked): everything about the purchase is gone and its key stops working', async () => {
+    const w = updWorld({ admin: true })
+    const t = await monthly(w)
+    await send(w, 'customer.subscription.created', { id: SUB, status: 'active' })
+    const res = await run(w, req(`/admin/purchase?sid=${SID}`, { method: 'DELETE', headers: { authorization: `Bearer ${ADMIN}` } }))
+    expect(await res.json()).toEqual({ forgotten: SID })
+    expect(keysOf(w)).toEqual([])
+    expect((await run(w, req('/u/latest.yml', bearer(t)))).status).toBe(403)
+    expect((await run(w, req(`/admin/purchase?sid=${SID}`, { method: 'DELETE', headers: { authorization: `Bearer ${ADMIN}` } }))).status).toBe(404)
+  })
+})
