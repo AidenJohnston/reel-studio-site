@@ -27,7 +27,7 @@
   <div class="glow violet" aria-hidden="true"></div>
   <div class="wrap narrow">
     <h1>Privacy policy</h1>
-    <p class="doc-meta">Last updated October 30, 2026</p>
+    <p class="doc-meta">Last updated November 2, 2026</p>
     <p>This policy covers this website, your purchase, and the Reel Studio desktop app. Reel Studio is sold by Curate Technologies LLC ("we").</p>
 
     <h2>The short version</h2>
@@ -39,37 +39,51 @@
     </ul>
 
     <h2>This website</h2>
-    <p>This site is plain pages with no cookies, no analytics and no tracking scripts. It is hosted on Cloudflare, as is the download server (dl.getreelstudio.com); Cloudflare may keep standard server logs (such as IP addresses) under its own privacy policy. The download server's request logs record the full address of each request, including your download link, and are kept for up to 7 days. To slow down abuse, the download server also counts requests per IP address; those counters are deleted after at most 2 hours.</p>
-    <p><strong>Your download link.</strong> After you pay, Stripe sends you to our thank-you page, which asks the download server to confirm the payment and answers a download link. The link carries a signed code that names your purchase (Stripe's checkout session), not you. We keep a record of the purchase: that session id, the plan, Stripe's customer id, when you bought, when we recorded it and when we emailed your receipt, and a keyed hash of the email you paid with (not the address itself), so we can send you a fresh link when you ask. The thank-you page remembers the code in your own browser's local storage so you can fetch new versions later; clear your browser storage to remove it.</p>
+    <p>This site is plain pages with no cookies, no analytics and no tracking scripts. It is hosted on Cloudflare, as is the download server (dl.getreelstudio.com); Cloudflare may keep standard server logs (such as IP addresses) under its own privacy policy. The download server's request logs record the full address of each request, including your download link, and are kept for up to 7 days. To slow down abuse, the download server also counts requests per IP address; those counters are deleted after at most 2 hours. The website's own request logs work the same way: they record the address of each page you open, including the purchase code Stripe adds to the thank-you page address, and are kept for up to 7 days.</p>
+    <p><strong>Do Not Track.</strong> This site doesn't track you across other websites and doesn't let anyone else do so, so it works the same whether or not your browser sends a Do Not Track or Global Privacy Control signal.</p>
+    <p><strong>Your download link.</strong> After you pay, Stripe sends you to our thank-you page, which asks the download server to confirm the payment and answers a download link. The link carries a signed code that names your purchase (Stripe's checkout session), not you. We keep a record of the purchase: that session id, the plan, Stripe's customer id, when you bought, when we recorded it and when we emailed your receipt, and a keyed hash of the email you paid with (not the address itself), so we can send you a fresh link when you ask. When you ask for a fresh link, we use the address you type only to look up your purchase and email you the link; we don't store it. The thank-you page remembers the code in your own browser's local storage so you can fetch new versions later; clear your browser storage to remove it.</p>
 
     <h2>When you buy</h2>
-    <p>Payments are processed by Stripe. Stripe collects your card details and billing information under its own privacy policy; we never see your full card number. From Stripe we receive your name, email address, billing country, what you bought and your payment history with us. We use that to send receipts, handle refunds and subscriptions, answer support requests and keep the records the law requires. We don't sell it or use it for advertising.</p>
-    <p>If you email us, we keep the conversation so we can help you.</p>
+    <p>Payments are handled by Stripe. Checkout is sold through Link, Stripe's payment service, which charges your card, adds any sales tax and can handle refund requests; your card statement shows LINK.COM. Stripe collects your card details and billing information under its own privacy policy, and we never see your full card number. In our Stripe account we can see your name, email address, billing country, what you bought and your payment history with us. We use that to send receipts, handle refunds and subscriptions, answer support requests and keep the records the law requires. We don't sell it, share it for advertising or use it for advertising.</p>
+    <p>If you email us, we keep the conversation so we can help you, and delete it 2 years after the last message. Our support mailbox is hosted by Google.</p>
 
     <h2>You bring the AI</h2>
     <p>Reel Studio's AI editor runs on your own AI subscription: a paid Claude plan through Anthropic's Claude Code app, or a paid ChatGPT plan through OpenAI's Codex app. AI usage isn't included in the price and counts against your plan's limits.</p>
     <p>Your account, your keys. By default Reel Studio drives the Claude Code or Codex app you've installed and signed in to yourself. That app handles its own sign-in, and Reel Studio never asks for, reads or stores that login. If you choose to paste an API key instead, the key is stored only in your computer's secure system storage and sent only to the provider it belongs to.</p>
 
     <h2>What the app does on your computer</h2>
-    <p>Transcription, cutting, captions, music mixing and rendering all run on your computer. Your videos and songs are never uploaded by Reel Studio. Send to Phone copies a video to your phone over your own Wi-Fi network.</p>
+    <p>Transcription, cutting, captions, music mixing and rendering all run on your computer. Your videos and songs are never uploaded by Reel Studio. Send to Phone copies a video to your phone over your own Wi-Fi network, through a private link that stops working after 15 minutes. The transfer stays on your network and isn't encrypted, so use it on a network you trust.</p>
+    <p>The app keeps a technical log on your computer to help fix problems. It can include file and folder names, which may include your computer's user name. It never leaves your computer unless you choose to send it to us.</p>
 
     <h2>Everything the app sends over the network, and why</h2>
     <ul>
       <li><strong>Update check.</strong> At most once a day, a request to our download server (dl.getreelstudio.com, run on Cloudflare) to see if there's a newer version (versions before 0.1.4 also ask GitHub's public releases list if that fails). It sends no account, cookie or ID. You can turn it off in Settings. Nothing is downloaded or installed automatically.</li>
       <li><strong>Speech model, on first run.</strong> A one-time download of the speech-recognition model from Hugging Face.</li>
-      <li><strong>Pictures and icons, when the editor asks for them.</strong> Searches for b-roll pictures and brand icons go to Openverse, Wikimedia Commons, Wikidata, Wikipedia, TVmaze and jsDelivr (Simple Icons). They carry the search words and nothing else.</li>
+      <li><strong>Pictures and icons, when the editor asks for them.</strong> Searches for b-roll pictures and brand icons go to Openverse, Wikimedia Commons, Wikidata, Wikipedia, TVmaze and jsDelivr (Simple Icons). They carry the search words (which the editor picks from what you say in your video) and, like any web request, your IP address. No account or ID.</li>
       <li><strong>Links.</strong> If you paste a link to a picture, video or song, the app downloads it from that site. If the editor names a website or app in your reel, the app may take a screenshot of that public page.</li>
       <li><strong>Your AI provider, only when you use the AI editor.</strong> Your Claude Code or Codex app sends Anthropic or OpenAI what the editor needs: the transcript with word timings, the project settings, a few still frames from a preview, your notes and style rules, and one small still of anything you attach to a note. If you pasted your own API key, the same goes to the Anthropic API or the compatible server you set up yourself.</li>
       <li><strong>Setup, only if you click install.</strong> The official Claude Code or Codex installer, downloaded from Anthropic or OpenAI.</li>
     </ul>
     <p>Nothing else is sent. There is no analytics, no telemetry and no crash reporting. With no AI connected, nothing goes to any AI provider.</p>
-    <p>What Anthropic, OpenAI, Hugging Face, GitHub and the image sites do with requests they receive is covered by their own privacy policies.</p>
+    <p>What Anthropic, OpenAI, Hugging Face, GitHub and the image sites do with requests they receive is covered by their own privacy policies. Whether Anthropic or OpenAI keep what the editor sends, or use it to train their models, follows the settings in your own Claude or ChatGPT account and their terms, not ours.</p>
+
+    <h2>If you're in the EU or UK</h2>
+    <p>Curate Technologies LLC is the controller of the information described here. We use it:</p>
+    <ul>
+      <li>to deliver what you bought (download links, updates, receipts and support), because we need to under our contract with you;</li>
+      <li>to keep the records tax and accounting law requires, because the law says so;</li>
+      <li>to keep the download server safe from abuse (request logs and per-address counters), because that's in our legitimate interest in keeping the service running for paying customers.</li>
+    </ul>
+    <p>We don't use it for anything else, and we make no automated decisions about you. You don't have to give us anything, but without an email address and payment we can't sell you Reel Studio or send your download links.</p>
+    <p>Stripe and Link handle checkout as their own controllers, under Stripe's privacy policy. Cloudflare runs our website, download server and email delivery for us, and Google hosts our support mailbox. They're in the United States, so your information is processed there. Those transfers rely on the EU-U.S. Data Privacy Framework and its UK Extension, or on the European Commission's standard contractual clauses where the Framework doesn't apply.</p>
+    <p>We keep purchase records while they can still get you downloads or updates, request logs for up to 7 days, emails with you for 2 years after the last message, and tax records as long as tax law requires.</p>
+    <p>You can ask for a copy of your information (including in a portable format), a correction or deletion, or for us to limit or stop using it. You can also complain to your local data protection authority.</p>
 
     <h2>Children</h2>
     <p>Reel Studio is not directed at children under 13, and we don't knowingly collect their information.</p>
 
     <h2>Your rights</h2>
-    <p>You can ask us for a copy of the information we hold about you, or ask us to correct or delete it, by emailing <a href="mailto:support@getreelstudio.com">support@getreelstudio.com</a>. We may need to keep some payment records for as long as tax and accounting law requires.</p>
+    <p>You can ask us for a copy of the information we hold about you, or ask us to correct or delete it, by emailing <a href="mailto:support@getreelstudio.com">support@getreelstudio.com</a>. We may need to keep some payment records for as long as tax and accounting law requires. We'll answer within 30 days.</p>
 
     <h2>Changes</h2>
     <p>If this policy changes, we'll update this page and the date at the top.</p>
