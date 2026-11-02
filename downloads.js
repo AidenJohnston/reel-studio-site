@@ -50,7 +50,8 @@ var ReelDownloads = (function () {
     if (answer.token) {
       remember(answer.token);
       var auto = document.getElementById('dl-auto-link');
-      if (auto) { auto.href = 'updates.html#key=' + answer.token; show('dl-auto', true); }
+      // Only once the newest version can update itself (older apps cannot take the key).
+      if (auto && answer.updates) { auto.href = 'updates.html#key=' + answer.token; show('dl-auto', true); }
     }
   }
 

@@ -23,7 +23,7 @@
 // every request and ignores the token's age; /d/ and the claim also need an unexpired token.
 import { handleAdmin } from './admin'
 import { linkEmail } from './email'
-import { fileByName, loadManifest, publicLatest, updateFileByName, updateYml, type Manifest, type ManifestFile } from './manifest'
+import { fileByName, loadManifest, publicLatest, updateFile, updateFileByName, updateYml, type Manifest, type ManifestFile } from './manifest'
 import { allow, clientIp } from './ratelimit'
 import { PAYMENT_INTENT_ID_RE, SUBSCRIPTION_ID_RE, entitlement, findByEmailHash, getPurchase, markReceipt, recordPurchase, setSubscriptionState, updatePaymentState, type Purchase } from './records'
 import { streamObject } from './serve'
@@ -106,6 +106,12 @@ function secretOr503(env: Env, name: 'TOKEN_SECRET' | 'STRIPE_SECRET_KEY' | 'STR
 
 function shortSid(sid: string): string {
   return sid.slice(0, 8) + '…' + sid.slice(-4)
+}
+
+/** Can the current release update itself? Only then do the pages and emails offer automatic updates: an app
+ * from before the updater could not take the key. */
+function updatesReady(m: Manifest): boolean {
+  return !!(updateFile(m, 'win') || updateFile(m, 'mac'))
 }
 
 /** The site page that hands the key to the app (`reelstudio://updates?key=…`). The key rides in the fragment,
@@ -203,7 +209,7 @@ async function claim(request: Request, url: URL, env: Env, deps: Deps): Promise<
     if (!ent.ok) return notEntitledJson(env, ent.reason)
   }
   const minted = token ? { token, expires: null } : await mintFor(secret, sid, plan, nowMs)
-  return json({ ok: true, plan, version: m.version, token: minted.token, expires: minted.expires, files: filesWithLinks(m, url.origin, minted.token) }, 200, env)
+  return json({ ok: true, plan, version: m.version, token: minted.token, expires: minted.expires, files: filesWithLinks(m, url.origin, minted.token), updates: updatesReady(m) }, 200, env)
 }
 
 /** The installer. The token must verify; the file name must be one of the current release's. */
@@ -324,7 +330,7 @@ async function sendLinks(env: Env, origin: string, secret: string, email: string
   if (!m) return false
   const { token } = await mintFor(secret, rec.sid, rec.plan, nowMs)
   const files = filesWithLinks(m, origin, token)
-  const msg = linkEmail({ reason, plan: rec.plan, version: m.version, win: files.win, mac: files.mac, updatesUrl: updatesUrl(env, token), siteOrigin: env.SITE_ORIGIN, supportEmail: env.FROM_EMAIL })
+  const msg = linkEmail({ reason, plan: rec.plan, version: m.version, win: files.win, mac: files.mac, updatesUrl: updatesReady(m) ? updatesUrl(env, token) : undefined, siteOrigin: env.SITE_ORIGIN, supportEmail: env.FROM_EMAIL })
   try {
     await env.EMAIL.send({ to: email, from: { email: env.FROM_EMAIL, name: env.FROM_NAME }, replyTo: env.FROM_EMAIL, subject: msg.subject, text: msg.text, html: msg.html })
     console.log(`[downloads] ${reason} emailed for ${shortSid(rec.sid)}`)

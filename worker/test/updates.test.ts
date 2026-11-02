@@ -249,6 +249,24 @@ describe('the receipt email', () => {
   })
 })
 
+describe('before the first release that can update itself', () => {
+  it('the receipt email and the claim do not offer automatic updates', async () => {
+    const w = world({ email: true })
+    await send(w, 'checkout.session.completed', paidSession({ payment_intent: PI }))
+    await Promise.all(w.waited)
+    const m = w.emails[0] as { text: string; html: string }
+    expect(m.text).not.toContain('updates.html')
+    expect(m.html).not.toContain('updates.html')
+    const b = (await (await run(w, req(`/api/claim?session_id=${SID}`))).json()) as { updates: boolean }
+    expect(b.updates).toBe(false)
+  })
+  it('once it is published, the claim says so', async () => {
+    const w = updWorld()
+    const b = (await (await run(w, req(`/api/claim?session_id=${SID}`))).json()) as { updates: boolean }
+    expect(b.updates).toBe(true)
+  })
+})
+
 describe('the manifest', () => {
   it('keeps sha512, the zip and up to five notes; drops malformed ones', () => {
     const m = parseManifest({ ...RELEASE, notes: [...Array(7)].map((_, i) => ({ version: `0.1.${9 - i}`, date: '2026-11-0' + (i + 1), text: 'x' })).concat([{ version: 'bad', date: 'x', text: 'y' }] as never) })!
