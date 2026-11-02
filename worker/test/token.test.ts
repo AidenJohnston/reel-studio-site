@@ -95,7 +95,7 @@ describe('manifest', () => {
     const m = parseManifest(good)!
     expect(m.version).toBe('0.1.3')
     const pub = publicLatest(m, 'https://getreelstudio.com/update.html')
-    expect(pub).toEqual({ version: '0.1.3', url: 'https://getreelstudio.com/update.html', files: { win: { name: 'Reel-Studio-Setup-0.1.3-x64.exe', size: 10, sha256: 'ab' }, mac: undefined } })
+    expect(pub).toEqual({ version: '0.1.3', url: 'https://getreelstudio.com/update.html', files: { win: { name: 'Reel-Studio-Setup-0.1.3-x64.exe', size: 10, sha256: 'ab' }, mac: undefined }, notes: [] })
     expect(JSON.stringify(pub)).not.toContain('v0.1.3/')
   })
   it('refuses a bad version, a file name with a path, or no files', () => {

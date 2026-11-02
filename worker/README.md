@@ -20,15 +20,45 @@ tells the app whether a newer version is out. No account, no cookie, no analytic
    support@getreelstudio.com), or `{delivery: "support"}` if the binding is absent, so the page tells the buyer
    to email support instead.
 5. `POST /stripe/webhook` records `checkout.session.completed` events (signature verified) and emails the buyer
-   their download links at once (the receipt; Stripe's own payment receipt is separate). A buyer who closes
-   the thanks page, or never reaches it, still gets what they paid for. A retried event does not send twice.
+   their download links at once (the receipt; Stripe's own payment receipt is separate), plus a link to
+   `updates.html#key=<token>`, which hands the key to the app (`reelstudio://updates?key=…`) so it can update
+   itself. A buyer who closes the thanks page, or never reaches it, still gets what they paid for. A retried
+   event does not send twice. The same endpoint keeps what a purchase is entitled to current (see below).
 6. `GET /latest.json` is the tokenless manifest the app's update check reads: version, the page to open, and the
    file names, sizes and SHA-256 hashes. Cached five minutes.
 
-7. `GET /source/<release>/<file>` is public, no token: the corresponding source of the open-source programs
+7. `GET /u/latest.yml`, `GET /u/latest-mac.yml`, `GET /u/<file>`: the update feed for the app's updater
+   (electron-updater, generic provider at `https://dl.getreelstudio.com/u/`). The yml is rendered from the
+   manifest (Windows: the NSIS installer; Mac: the zipped, stapled .app, which is what Squirrel.Mac installs),
+   so it can never name another version or file. Every request needs `Authorization: Bearer <download token>`;
+   the token's age is ignored and the purchase is checked instead: 401 no key / not ours, 403
+   `{"error":"not entitled","reason":…}` when the purchase no longer is.
+
+8. `GET /source/<release>/<file>` is public, no token: the corresponding source of the open-source programs
    in the installers (FFmpeg and its libraries), from R2 keys under `source/` only. `/source/` and
    `/source/<release>/` list them (from the Workers cache for five minutes, so a new folder takes up to five
    minutes to appear); https://getreelstudio.com/source.html says what each file is.
+
+## Who is entitled
+
+`src/records.ts` `entitlement()`, used by the update feed, `/d/`, the claim and "email me my link":
+
+- **Monthly:** while the subscription is `active`, `trialing`, `past_due` (Stripe still retrying the card) or
+  `incomplete` (only seen for a moment during Checkout). `canceled`, `unpaid`, `incomplete_expired` and `paused`
+  end it. Cancelling in the billing portal ends it at the end of the paid month, when Stripe says `canceled`.
+- **One-time ($99, no longer sold):** always, unless the payment was refunded in full or is disputed (a dispute
+  won, or an inquiry closed without a chargeback, restores it).
+
+The webhook stores what Stripe says under its own keys, `sub:<subscription id>` and `pay:<payment intent id>`,
+whether or not the purchase is on file yet, and an older event never overwrites a newer one, so the order Stripe
+sends events in does not matter. Refunds and disputes of a monthly invoice are not tracked: the subscription's
+status decides. Support can see one purchase with `node tools/publish.mjs purchase --sid cs_live_…`.
+
+**Retention.** A record is kept while its purchase is entitled. When it stops being entitled, every KV key of
+that purchase (`sess:`, the `email:` pointer if it still points there, `sub:`/`subsess:`, `pay:`/`paysess:`) gets a
+90-day expiry; if it becomes entitled again the expiry is lifted. A buyer who asks to be deleted sooner:
+`node tools/publish.mjs forget --sid cs_live_…` (their links and updates stop). One-time purchases stay entitled,
+so their records stay until the buyer asks.
 
 ## Publishing source files
 
@@ -48,17 +78,28 @@ Worker carries at most 100 MB and wrangler refuses files over 300 MiB):
 
 ```
 set DOWNLOADS_ADMIN_SECRET=…
-node tools/publish.mjs release --version 0.1.3 --win "…\Reel Studio Setup 0.1.3.exe" --mac "…\Reel Studio 0.1.3.dmg" --dry-run
-node tools/publish.mjs release --version 0.1.3 --win "…" --mac "…"
+node tools/publish.mjs release --version 0.1.5 --win "…\Reel Studio Setup 0.1.5.exe" --mac "…\Reel Studio 0.1.5.dmg" --mac-zip "…\Reel-Studio-0.1.5-arm64-mac.zip" --notes notes-0.1.5.md --dry-run
+node tools/publish.mjs release --version 0.1.5 --win "…" --mac "…" --mac-zip "…" --notes notes-0.1.5.md
 node tools/publish.mjs list
 ```
 
-`release` hashes the files, uploads what is missing, and publishes the manifest; the Worker refuses a manifest
-whose files are not in the bucket at the stated size. The app sees the new version within five minutes.
+`release` hashes the files (SHA-256, and SHA-512 for the two the updater installs), uploads what is missing, and
+publishes the manifest; the Worker refuses a manifest whose files are not in the bucket at the stated size. The
+app sees the new version within five minutes. The Mac zip must hold the signed, notarized and **stapled** .app
+(`ditto -c -k --sequesterRsrc --keepParent "Reel Studio.app" …zip`), not the dmg; without `--mac-zip` there is no
+Mac update for that release. `--notes` puts this release's notes in front of the five newest in `latest.json`.
 Old versions can be removed with `delete --key v0.1.2/…`.
 
 Support: a buyer lost their link. Find the Checkout Session id in Stripe (Payments → the payment → Checkout
 session, `cs_live_…`) and run `node tools/publish.mjs link --sid cs_live_…` to mint fresh links to send them.
+
+## Staging
+
+`npx wrangler deploy --env staging` runs the same code at `https://dl-staging.getreelstudio.com` with its own KV
+namespace and R2 bucket (`reel-studio-installers-staging`), Stripe **test mode** secrets and no email binding.
+Publish to it with `DOWNLOADS_API=https://dl-staging.getreelstudio.com` and its own `DOWNLOADS_ADMIN_SECRET`. A
+build pointed at `https://dl-staging.getreelstudio.com/u/` updates itself from it, so a release can be proven end
+to end (buy with Stripe's test card, update, cancel, be refused) before anyone sees it.
 
 ## Setup
 
@@ -75,7 +116,7 @@ Secrets (`npx wrangler secret put NAME`):
 |---|---|
 | `TOKEN_SECRET` | 32+ random bytes. Signs download tokens and keys the email hashes. Rotating it invalidates every link. |
 | `STRIPE_SECRET_KEY` | A **restricted** Stripe key with only *Checkout Sessions: Read*. |
-| `STRIPE_WEBHOOK_SECRET` | The signing secret of the Stripe webhook endpoint `https://dl.getreelstudio.com/stripe/webhook` (event `checkout.session.completed`). |
+| `STRIPE_WEBHOOK_SECRET` | The signing secret of the Stripe webhook endpoint `https://dl.getreelstudio.com/stripe/webhook`. Events: `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `customer.subscription.created`, `.updated`, `.deleted`, `charge.refunded`, `charge.dispute.created`, `charge.dispute.closed`. |
 | `ADMIN_SECRET` | 32+ random bytes for `tools/publish.mjs`. Without it the `/admin` routes do not exist. |
 
 Bindings (`wrangler.jsonc`): KV `PURCHASES`, R2 `INSTALLERS`, and the `send_email` binding `EMAIL` (Cloudflare
@@ -84,7 +125,7 @@ Without the binding, receipts are skipped and "email me my link" degrades to "em
 
 ## Privacy
 
-The Worker stores, per purchase: the Stripe Checkout Session id, the plan, Stripe's customer id, the time, and
-`HMAC(TOKEN_SECRET, email)`. The Worker's own log lines carry a shortened session id and a file name, but
+The Worker stores, per purchase: the Stripe Checkout Session id, the plan, Stripe's customer id, the subscription
+or payment intent id, the time, and `HMAC(TOKEN_SECRET, email)`; per subscription or payment, its status. The Worker's own log lines carry a shortened session id and a file name, but
 Cloudflare's request logs (`observability` in `wrangler.jsonc`) record every request's full URL, including the
-token in a `/d/<token>/` link. The download token holds the session id, the plan and an expiry.
+token in a `/d/<token>/` link. The update feed takes the token in a header, so those URLs hold none. The download token holds the session id, the plan and an expiry.

@@ -1,5 +1,6 @@
 // The two things we need from Stripe: verifying a webhook's signature, and reading one Checkout Session
-// (restricted key, read-only) to confirm it was paid. No SDK: two small, auditable requests.
+// (restricted key, read-only) to confirm it was paid. No SDK: two small, auditable requests. Everything
+// else (subscriptions ending, refunds, disputes) arrives as webhook events; we never ask for it.
 import { hmac, timingSafeEqual } from './token'
 import type { Plan } from './token'
 
@@ -41,6 +42,10 @@ export interface StripeSession {
   customer_details?: { email?: string | null } | null
   customer_email?: string | null
   payment_link?: string | null
+  /** mode=subscription: the subscription it started. */
+  subscription?: string | null
+  /** mode=payment: the PaymentIntent that took the money. */
+  payment_intent?: string | null
   created?: number
 }
 

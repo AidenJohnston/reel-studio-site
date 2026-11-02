@@ -4,11 +4,15 @@ import { hmac } from '../src/token'
 
 export class FakeKV {
   store = new Map<string, string>()
+  /** Keys with an expiry: key → expirationTtl (seconds). A put without one clears it, as in KV. */
+  ttl = new Map<string, number>()
   async get(key: string): Promise<string | null> {
     return this.store.get(key) ?? null
   }
-  async put(key: string, value: string): Promise<void> {
+  async put(key: string, value: string, opts?: { expirationTtl?: number }): Promise<void> {
     this.store.set(key, value)
+    if (opts?.expirationTtl) this.ttl.set(key, opts.expirationTtl)
+    else this.ttl.delete(key)
   }
   async delete(key: string): Promise<void> {
     this.store.delete(key)

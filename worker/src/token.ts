@@ -12,8 +12,8 @@ export interface TokenClaims {
   e: number
 }
 
-/** How long a download link works. The $99 license is perpetual, so a long life; the thanks page and the
- * email form can always mint a fresh one from the same purchase. */
+/** How long a download link works. A long life; the thanks page and the email form can always mint a fresh
+ * one from the same purchase. The update feed (/u/) ignores the age: it checks the purchase itself. */
 export const TOKEN_DAYS = 400
 const MAX_TOKEN_LENGTH = 512
 
@@ -61,8 +61,8 @@ export async function mintToken(secret: string, claims: TokenClaims): Promise<st
   return `v1.${body}.${sig}`
 }
 
-/** The claims if the token is well-formed, signed by us and not expired; otherwise null. */
-export async function verifyToken(secret: string, token: unknown, nowSec: number): Promise<TokenClaims | null> {
+/** The claims if the token is well-formed, signed by us and not expired (unless `ignoreExpiry`); otherwise null. */
+export async function verifyToken(secret: string, token: unknown, nowSec: number, opts: { ignoreExpiry?: boolean } = {}): Promise<TokenClaims | null> {
   if (typeof token !== 'string' || token.length > MAX_TOKEN_LENGTH) return null
   const parts = token.split('.')
   if (parts.length !== 3 || parts[0] !== 'v1') return null
@@ -82,7 +82,7 @@ export async function verifyToken(secret: string, token: unknown, nowSec: number
   if (!claims || typeof claims !== 'object') return null
   const { s, p, e } = claims as Record<string, unknown>
   if (typeof s !== 'string' || !s || (p !== 'once' && p !== 'monthly') || typeof e !== 'number' || !Number.isFinite(e)) return null
-  if (e <= nowSec) return null
+  if (!opts.ignoreExpiry && e <= nowSec) return null
   return { s, p, e }
 }
 

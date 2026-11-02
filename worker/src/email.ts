@@ -6,6 +6,8 @@ export interface LinkEmailInput {
   version: string
   win?: { name: string; url: string }
   mac?: { name: string; url: string }
+  /** The page that turns on automatic updates in the app (hands it the key). */
+  updatesUrl?: string
   siteOrigin: string
   supportEmail: string
 }
@@ -19,12 +21,13 @@ export function linkEmail(i: LinkEmailInput): { subject: string; text: string; h
   const subject = receipt ? 'Your Reel Studio download' : `Your Reel Studio ${i.version} download link`
   const opening = receipt
     ? i.plan === 'monthly'
-      ? `Thanks for subscribing to Reel Studio. Here is your download link for version ${i.version}. Your payment receipt comes separately from Stripe.`
-      : `Thanks for buying Reel Studio. Your license covers this version and every 1.x update. Here is your download link for version ${i.version}. Your payment receipt comes separately from Stripe.`
+      ? `Thanks for subscribing to Reel Studio. Your subscription includes every update while it is active. Here is your download link for version ${i.version}. Your payment receipt comes separately from Stripe.`
+      : `Thanks for buying Reel Studio. Your purchase includes all future updates. Here is your download link for version ${i.version}. Your payment receipt comes separately from Stripe.`
     : `Here is your download link for Reel Studio ${i.version}.`
   const lines = [opening, '']
   if (i.mac) lines.push('Mac (Apple silicon, macOS 14 or newer):', i.mac.url, '')
   if (i.win) lines.push('Windows 10/11 (64-bit):', i.win.url, '')
+  if (i.updatesUrl) lines.push('Once Reel Studio is installed, open this link to turn on automatic updates:', i.updatesUrl, '')
   lines.push(
     'The link is yours: it keeps working for new versions too, so keep this email.',
     'On a Mac, drag Reel Studio into Applications and open it. On Windows, if a blue "Windows protected your PC" box appears, click More info, then Run anyway.',
@@ -40,6 +43,7 @@ export function linkEmail(i: LinkEmailInput): { subject: string; text: string; h
 <h1 style="font-size:20px;margin:0 0 16px">${receipt ? 'Your Reel Studio download' : `Your Reel Studio ${esc(i.version)} download`}</h1>
 <p>${esc(opening)}</p>
 ${i.mac ? button('Download for Mac', i.mac) : ''}${i.win ? button('Download for Windows', i.win) : ''}
+${i.updatesUrl ? `<p style="margin:0 0 16px">Once Reel Studio is installed: <a href="${esc(i.updatesUrl)}">turn on automatic updates</a>.</p>` : ''}
 <p>The link is yours: it keeps working for new versions too, so keep this email.</p>
 <p style="color:#444">On a Mac, drag Reel Studio into Applications and open it. On Windows, if a blue "Windows protected your PC" box appears, click <b>More info</b>, then <b>Run anyway</b>.</p>
 <p style="color:#666;font-size:13px">If you did not ask for this email, you can ignore it. Questions: <a href="mailto:${esc(i.supportEmail)}">${esc(i.supportEmail)}</a><br>Reel Studio, <a href="${esc(i.siteOrigin)}">${esc(i.siteOrigin)}</a></p>

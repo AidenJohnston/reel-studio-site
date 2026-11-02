@@ -10,8 +10,10 @@
 //   POST   /admin/upload/abort    {key, uploadId}
 //   PUT    /admin/manifest        the manifest    checks every file is in R2 at the stated size, then publishes
 //   POST   /admin/link            {sid, plan?}    mint download links for one purchase (support: "resend my link")
+//   GET    /admin/purchase?sid=…                  the record and whether it is still entitled (support)
+//   DELETE /admin/purchase?sid=…                  delete everything about one purchase now (the buyer asked)
 import { MANIFEST_KEY, loadManifest, parseManifest, publicLatest, type ManifestFile } from './manifest'
-import { getPurchase } from './records'
+import { entitlement, forgetPurchase, getPaymentState, getPurchase, getSubscriptionState } from './records'
 import { SESSION_ID_RE } from './stripe'
 import { TOKEN_DAYS, mintToken, timingSafeEqual } from './token'
 
@@ -67,6 +69,23 @@ export async function handleAdmin(request: Request, url: URL, env: AdminEnv, now
     const token = await mintToken(env.TOKEN_SECRET, { s: sid, p: plan, e: expires })
     const link = (f?: ManifestFile) => (f ? `${url.origin}/d/${token}/${encodeURIComponent(f.name)}` : undefined)
     return json({ sid, plan, onFile: !!rec, version: m.version, expires, token, win: link(m.files.win), mac: link(m.files.mac) })
+  }
+
+  if (path === '/admin/purchase' && method === 'GET') {
+    const sid = url.searchParams.get('sid') ?? ''
+    if (!SESSION_ID_RE.test(sid)) return json({ error: 'bad session id' }, 400)
+    const rec = await getPurchase(env.PURCHASES, sid)
+    if (!rec) return json({ error: 'not on file' }, 404)
+    const subscription = rec.subscription ? await getSubscriptionState(env.PURCHASES, rec.subscription) : null
+    const payment = rec.paymentIntent ? await getPaymentState(env.PURCHASES, rec.paymentIntent) : null
+    const { emailHash: _hash, ...shown } = rec
+    return json({ purchase: shown, subscription, payment, entitlement: await entitlement(env.PURCHASES, rec) })
+  }
+
+  if (path === '/admin/purchase' && method === 'DELETE') {
+    const sid = url.searchParams.get('sid') ?? ''
+    if (!SESSION_ID_RE.test(sid)) return json({ error: 'bad session id' }, 400)
+    return (await forgetPurchase(env.PURCHASES, sid)) ? json({ forgotten: sid }) : json({ error: 'not on file' }, 404)
   }
 
   if (path === '/admin/objects' && method === 'GET') {
@@ -134,7 +153,7 @@ export async function handleAdmin(request: Request, url: URL, env: AdminEnv, now
     const m = parseManifest(await body(request))
     if (!m) return json({ error: 'malformed manifest' }, 400)
     const problems: string[] = []
-    for (const f of [m.files.win, m.files.mac] as (ManifestFile | undefined)[]) {
+    for (const f of [m.files.win, m.files.mac, m.files.macZip] as (ManifestFile | undefined)[]) {
       if (!f) continue
       if (!OBJECT_KEY_RE.test(f.key)) problems.push(`${f.name}: bad key ${f.key}`)
       else {
