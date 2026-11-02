@@ -328,6 +328,7 @@ code { font-family: var(--mono); font-size: .88em; background: var(--surface-2);
 /* Pricing */
 #pricing .glow.violet { width: 640px; height: 420px; left: 50%; top: 160px; transform: translateX(-50%); opacity: .22; }
 .plans { position: relative; z-index: 1; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; max-width: 900px; margin: 0 auto; }
+.plans.single { grid-template-columns: minmax(0, 460px); justify-content: center; }
 .plan { position: relative; display: flex; flex-direction: column; padding: 36px; border-radius: 22px; background: var(--surface); border: 1px solid var(--line); }
 .plan.featured { border: 1px solid transparent; background: linear-gradient(var(--surface), var(--surface)) padding-box, linear-gradient(140deg, #a78bfa, #f472b6 55%, var(--line-2)) border-box; box-shadow: 0 40px 100px -40px rgba(124, 58, 237, .6); }
 .plan-flag { position: absolute; top: -12px; left: 36px; font-size: .74rem; font-weight: 600; letter-spacing: .02em; color: #0a0a0b; background: var(--grad); border-radius: 999px; padding: 4px 11px; }

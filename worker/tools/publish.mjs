@@ -3,14 +3,17 @@
 //
 //   DOWNLOADS_ADMIN_SECRET=… node tools/publish.mjs list
 //   DOWNLOADS_ADMIN_SECRET=… node tools/publish.mjs upload --key v0.1.3/Reel-Studio-Setup-0.1.3-x64.exe --file "…\Reel Studio Setup 0.1.3.exe"
-//   DOWNLOADS_ADMIN_SECRET=… node tools/publish.mjs release --version 0.1.3 --win "…\Reel Studio Setup 0.1.3.exe" --mac "…\Reel Studio 0.1.3.dmg" [--dry-run]
+//   DOWNLOADS_ADMIN_SECRET=… node tools/publish.mjs release --version 0.1.5 --win "…\Reel Studio Setup 0.1.5.exe" --mac "…\Reel Studio 0.1.5.dmg" --mac-zip "…\Reel Studio-0.1.5-arm64-mac.zip" --notes notes-0.1.5.md [--dry-run]
 //   DOWNLOADS_ADMIN_SECRET=… node tools/publish.mjs delete --key v0.1.2/Reel-Studio-Setup-0.1.2-x64.exe
 //
-// `release` hashes both installers, uploads any that are not in the bucket yet at the right size (64 MiB
-// parts, each retried), then publishes the manifest; the server refuses a manifest whose files are not in
-// the bucket. DOWNLOADS_API overrides the server (default https://dl.getreelstudio.com).
+// `release` hashes the files (SHA-256 for people, SHA-512 for the app's updater), uploads any that are not in
+// the bucket yet at the right size (64 MiB parts, each retried), then publishes the manifest; the server
+// refuses a manifest whose files are not in the bucket. The update feed (/u/) serves the Windows installer and
+// the Mac zip, so a release without --mac-zip has no Mac update. --notes adds this release's notes in front of
+// the current ones (newest five kept), which the app's "What's new" reads from latest.json.
+// DOWNLOADS_API overrides the server (default https://dl.getreelstudio.com; staging: https://dl-staging.getreelstudio.com).
 import { createHash } from 'node:crypto'
-import { open, stat } from 'node:fs/promises'
+import { open, readFile, stat } from 'node:fs/promises'
 import { basename } from 'node:path'
 
 const API = (process.env.DOWNLOADS_API || 'https://dl.getreelstudio.com').replace(/\/$/, '')
@@ -40,8 +43,10 @@ async function api(method, path, body, headers = {}) {
   return json
 }
 
-async function sha256(file) {
+/** { sha256: hex, sha512: base64 } in one pass over the file. */
+async function hashes(file) {
   const h = createHash('sha256')
+  const h512 = createHash('sha512')
   const fh = await open(file, 'r')
   try {
     const buf = new Uint8Array(8 * 1024 * 1024)
@@ -49,11 +54,24 @@ async function sha256(file) {
       const { bytesRead } = await fh.read(buf, 0, buf.length, null)
       if (!bytesRead) break
       h.update(buf.subarray(0, bytesRead))
+      h512.update(buf.subarray(0, bytesRead))
     }
   } finally {
     await fh.close()
   }
-  return h.digest('hex')
+  return { sha256: h.digest('hex'), sha512: h512.digest('base64') }
+}
+
+/** The notes on the live server now (newest first), so a release adds to them instead of replacing them. */
+async function currentNotes() {
+  try {
+    const res = await fetch(`${API}/latest.json`, { headers: { 'Cache-Control': 'no-cache' } })
+    if (!res.ok) return []
+    const j = await res.json()
+    return Array.isArray(j.notes) ? j.notes : []
+  } catch {
+    return []
+  }
 }
 
 async function list() {
@@ -110,20 +128,34 @@ async function release() {
   if (!/^\d+\.\d+\.\d+$/.test(version || '')) throw new Error('--version X.Y.Z is required')
   const win = arg('win')
   const mac = arg('mac')
+  const macZip = arg('mac-zip')
   if (!win && !mac) throw new Error('--win and/or --mac installer paths are required')
+  if (macZip && !mac) throw new Error('--mac-zip goes with --mac')
+  if (mac && !macZip) console.log('note: no --mac-zip, so this release has no automatic update for Mac')
   const files = {}
-  for (const [os, file, name] of [
-    ['win', win, `Reel-Studio-Setup-${version}-x64.exe`],
-    ['mac', mac, `Reel-Studio-${version}-arm64.dmg`]
+  for (const [os, file, name, withSha512] of [
+    ['win', win, `Reel-Studio-Setup-${version}-x64.exe`, true],
+    ['mac', mac, `Reel-Studio-${version}-arm64.dmg`, false],
+    ['macZip', macZip, `Reel-Studio-${version}-arm64-mac.zip`, true]
   ]) {
     if (!file) continue
     const size = (await stat(file)).size
     console.log(`${os}: ${basename(file)} (${size} bytes), hashing…`)
-    files[os] = { name, key: `v${version}/${name}`, size, sha256: await sha256(file), _file: file }
-    console.log(`  sha256 ${files[os].sha256}`)
+    const h = await hashes(file)
+    files[os] = { name, key: `v${version}/${name}`, size, sha256: h.sha256, ...(withSha512 ? { sha512: h.sha512 } : {}), _file: file }
+    console.log(`  sha256 ${h.sha256}${withSha512 ? `\n  sha512 ${h.sha512}` : ''}`)
   }
-  const manifest = { version, page: arg('page', 'https://getreelstudio.com/update.html'), published: new Date().toISOString().slice(0, 10), files: {} }
-  for (const [os, f] of Object.entries(files)) manifest.files[os] = { name: f.name, key: f.key, size: f.size, sha256: f.sha256 }
+  const published = new Date().toISOString().slice(0, 10)
+  const manifest = { version, page: arg('page', 'https://getreelstudio.com/update.html'), published, files: {} }
+  for (const [os, f] of Object.entries(files)) {
+    const { _file, ...entry } = f
+    manifest.files[os] = entry
+  }
+  const notesFile = arg('notes')
+  const earlier = (await currentNotes()).filter((n) => n && n.version !== version)
+  const mine = notesFile ? [{ version, date: published, text: (await readFile(notesFile, 'utf8')).trim() }] : []
+  if (mine.length && mine[0].text.length > 4000) throw new Error('--notes: keep it under 4000 characters')
+  manifest.notes = [...mine, ...earlier].slice(0, 5)
   console.log('manifest:', JSON.stringify(manifest, null, 2))
   if (has('dry-run')) return console.log('dry run: nothing uploaded, nothing published')
   for (const f of Object.values(files)) await upload(f.key, f._file)
@@ -156,8 +188,13 @@ async function main() {
     if (!sid) throw new Error('--sid cs_live_… is required')
     const r = await api('POST', '/admin/link', { sid, plan: arg('plan', 'once') })
     console.log(`${r.onFile ? 'on file' : 'NOT on file (links still work)'}, plan ${r.plan}, version ${r.version}\nMac:     ${r.mac}\nWindows: ${r.win}`)
+  } else if (cmd === 'purchase') {
+    // Support: does this purchase still get downloads and updates, and why not?
+    const sid = arg('sid')
+    if (!sid) throw new Error('--sid cs_live_… is required')
+    console.log(JSON.stringify(await api('GET', `/admin/purchase?sid=${encodeURIComponent(sid)}`), null, 2))
   } else {
-    console.log('usage: publish.mjs list | upload --key K --file F | delete --key K | release --version V --win F --mac F [--dry-run] | link --sid cs_live_…')
+    console.log('usage: publish.mjs list | upload --key K --file F | delete --key K | release --version V --win F --mac F [--mac-zip F] [--notes F] [--dry-run] | link --sid cs_live_… | purchase --sid cs_live_…')
     process.exitCode = 2
   }
 }

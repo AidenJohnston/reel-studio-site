@@ -16,7 +16,8 @@ describe('GET /latest.json', () => {
     expect(body).toEqual({
       version: '0.1.2',
       url: 'https://getreelstudio.com/update.html',
-      files: { win: { name: 'Reel-Studio-Setup-0.1.2-x64.exe', size: 5, sha256: 'a'.repeat(64) }, mac: { name: 'Reel-Studio-0.1.2-arm64.dmg', size: 3, sha256: 'b'.repeat(64) } }
+      files: { win: { name: 'Reel-Studio-Setup-0.1.2-x64.exe', size: 5, sha256: 'a'.repeat(64) }, mac: { name: 'Reel-Studio-0.1.2-arm64.dmg', size: 3, sha256: 'b'.repeat(64) } },
+      notes: []
     })
   })
   it('503 with no manifest (nothing is downloadable until a release is published)', async () => {

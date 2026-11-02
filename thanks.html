@@ -40,6 +40,7 @@
       </div>
       <div class="dl-notes">
         <p class="muted small" id="dl-src"><a href="source.html">Source code for the open-source parts (FFmpeg)</a>. Reel Studio bundles FFmpeg, which is free software under the GPL v3; its complete source code and build scripts are on that page. The notices for every bundled part are in THIRD_PARTY.md, in the app's licenses folder.</p>
+        <p class="muted small" id="dl-auto" hidden>Once it's installed: <a id="dl-auto-link" href="updates.html">turn on automatic updates</a>, so Reel Studio fetches new versions by itself.</p>
         <p class="muted small" id="dl-help" hidden>On a Mac, drag Reel Studio into Applications and open it. On Windows, if a blue "Windows protected your PC" box appears, click <strong>More info</strong>, then <strong>Run anyway</strong>. The first time it opens, the app downloads its speech model once; keep the window open until the bar finishes.</p>
         <p class="muted small" id="dl-keep" hidden>Keep this page: the link is yours and works for new versions too. Lost it? <a href="update.html">Get a fresh link</a> with the email you paid with.</p>
       </div>
@@ -91,7 +92,7 @@
     line.textContent = 'Thanks for subscribing to Reel Studio for $20 a month. It funds development. Your receipt is on its way by email.';
     document.getElementById('portal-line').hidden = false;
   } else if (plan === 'once') {
-    line.textContent = 'Thanks for buying Reel Studio. Your $99 license covers this version and every 1.x update, and it funds development. Your receipt is on its way by email.';
+    line.textContent = 'Thanks for buying Reel Studio. Your purchase includes all future updates, and it funds development. Your receipt is on its way by email.';
   }
 
   // Stripe sends the buyer here with ?session_id={CHECKOUT_SESSION_ID}. The download server confirms the

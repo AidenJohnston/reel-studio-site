@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<meta name="referrer" content="no-referrer">
+<title>Turn on automatic updates · Reel Studio</title>
+<meta name="theme-color" content="#08080a">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preload" href="fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="./"><span class="brand-mark" aria-hidden="true"></span>Reel Studio</a>
+    <nav class="nav" aria-label="Main">
+      <a href="./#faq">FAQ</a>
+      <a class="btn sm secondary" href="mailto:support@getreelstudio.com">Get help</a>
+    </nav>
+  </div>
+</header>
+
+<main class="doc" id="main">
+  <div class="glow violet" aria-hidden="true"></div>
+  <div class="wrap narrow">
+    <span class="kicker">Updates</span>
+    <h1>Turn on automatic updates</h1>
+    <p class="lede-doc">This hands Reel Studio your download key, so it can fetch new versions by itself and ask before it installs them. Install Reel Studio first, then click the button.</p>
+
+    <div class="dl-panel">
+      <div class="downloads">
+        <a class="btn" id="open-app" href="#" hidden>Open Reel Studio<small>and turn on automatic updates</small></a>
+        <p class="muted" id="no-key" hidden>This page needs the link from your receipt email. <a href="update.html">Get a fresh link</a> with the email you paid with.</p>
+      </div>
+      <div class="dl-notes" id="fallback" hidden>
+        <p class="muted small">Your browser asks first: choose <strong>Open Reel Studio</strong>. If nothing happens, open Reel Studio, go to <strong>Settings › About</strong>, click <strong>Paste my download link</strong>, and paste this:</p>
+        <div class="field-row">
+          <label class="visually-hidden" for="key-link">Your download link</label>
+          <input class="input" type="text" id="key-link" readonly>
+          <button type="button" class="btn secondary" id="copy">Copy</button>
+        </div>
+        <p class="muted small">Keep it to yourself: it is how the update server knows you paid. Reel Studio sends it only to dl.getreelstudio.com, and only when it downloads an update. The daily check for new versions sends nothing.</p>
+      </div>
+    </div>
+
+    <p class="muted small" style="margin-top:40px">Questions: <a href="mailto:support@getreelstudio.com">support@getreelstudio.com</a>.</p>
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div>
+      <a class="brand" href="./"><span class="brand-mark" aria-hidden="true"></span>Reel Studio</a>
+      <p>Reel Studio is sold by Curate Technologies LLC.</p>
+    </div>
+    <nav aria-label="Footer">
+      <a href="terms.html">Terms</a>
+      <a href="privacy.html">Privacy</a>
+      <a href="refund.html">Refunds</a>
+      <a href="https://github.com/AidenJohnston/reel-studio-app">GitHub</a>
+      <a href="source.html">Open-source parts</a>
+      <a href="mailto:support@getreelstudio.com">support@getreelstudio.com</a>
+    </nav>
+  </div>
+</footer>
+
+<script src="downloads.js"></script>
+<script>
+(function () {
+  // The key arrives in the fragment (#key=…), which the browser never sends to a server. It falls back to the
+  // download code this browser remembered from the thanks page.
+  var KEY_RE = /^v1\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/;
+  var m = /(?:^#|&)key=([^&]+)/.exec(location.hash);
+  var key = m ? decodeURIComponent(m[1]) : ReelDownloads.remembered();
+  if (!key || !KEY_RE.test(key) || key.length > 512) {
+    document.getElementById('no-key').hidden = false;
+    return;
+  }
+  var appLink = 'reelstudio://updates?key=' + encodeURIComponent(key);
+  var open = document.getElementById('open-app');
+  open.href = appLink;
+  open.hidden = false;
+  document.getElementById('fallback').hidden = false;
+  var box = document.getElementById('key-link');
+  box.value = location.origin + location.pathname + '#key=' + key;
+  document.getElementById('copy').addEventListener('click', function () {
+    box.select();
+    var done = function () { document.getElementById('copy').textContent = 'Copied'; };
+    if (navigator.clipboard) navigator.clipboard.writeText(box.value).then(done, function () { document.execCommand('copy'); done(); });
+    else { document.execCommand('copy'); done(); }
+  });
+})();
+</script>
+</body>
+</html>

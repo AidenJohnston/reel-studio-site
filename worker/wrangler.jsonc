@@ -25,5 +25,21 @@
   // Receipts and "email me my link". Needs Cloudflare Email Sending on the Workers Paid plan with the domain
   // onboarded (`npx wrangler email sending enable getreelstudio.com`, done 2026-10-30). Remove the binding and
   // the Worker degrades to delivery: "support".
-  "send_email": [{ "name": "EMAIL", "allowed_sender_addresses": ["support@getreelstudio.com"] }]
+  "send_email": [{ "name": "EMAIL", "allowed_sender_addresses": ["support@getreelstudio.com"] }],
+  // `npx wrangler deploy --env staging`: the same Worker at dl-staging.getreelstudio.com with its own KV and
+  // R2 and Stripe TEST mode secrets, for proving an update end to end before users see it (a build pointed at
+  // it updates 9.9.8 → 9.9.9). No email binding: test purchases send no receipts. Bindings are not inherited.
+  "env": {
+    "staging": {
+      "name": "reel-studio-downloads-staging",
+      "routes": [{ "pattern": "dl-staging.getreelstudio.com", "custom_domain": true }],
+      "vars": {
+        "SITE_ORIGIN": "https://getreelstudio.com",
+        "FROM_EMAIL": "support@getreelstudio.com",
+        "FROM_NAME": "Reel Studio (staging)"
+      },
+      "kv_namespaces": [{ "binding": "PURCHASES", "id": "be3d2a741c524c48b7f876693508de9f" }],
+      "r2_buckets": [{ "binding": "INSTALLERS", "bucket_name": "reel-studio-installers-staging" }]
+    }
+  }
 }

@@ -57,7 +57,8 @@
 
     <h2>Everything the app sends over the network, and why</h2>
     <ul>
-      <li><strong>Update check.</strong> At most once a day, a request to our download server (dl.getreelstudio.com, run on Cloudflare) to see if there's a newer version (versions before 0.1.4 also ask GitHub's public releases list if that fails). It sends no account, cookie or ID. You can turn it off in Settings. Nothing is downloaded or installed automatically.</li>
+      <li><strong>Update check.</strong> At most once a day, a request to our download server (dl.getreelstudio.com, run on Cloudflare) to see if there's a newer version (versions before 0.1.4 also ask GitHub's public releases list if that fails). It sends no account, cookie or ID. You can turn it off in Settings.</li>
+      <li><strong>Automatic updates, only once you turn them on.</strong> When there's a new version, the app downloads it from dl.getreelstudio.com and sends your download key with that download (in a request header, not the address), so the server can check that your purchase or subscription is active. The key identifies your purchase, not you: it holds the Stripe checkout id, the plan and a date, never your email or name. The app asks before it installs anything.</li>
       <li><strong>Speech model, on first run.</strong> A one-time download of the speech-recognition model from Hugging Face.</li>
       <li><strong>Pictures and icons, when the editor asks for them.</strong> Searches for b-roll pictures and brand icons go to Openverse, Wikimedia Commons, Wikidata, Wikipedia, TVmaze and jsDelivr (Simple Icons). They carry the search words (which the editor picks from what you say in your video) and, like any web request, your IP address. No account or ID.</li>
       <li><strong>Links.</strong> If you paste a link to a picture, video or song, the app downloads it from that site. If the editor names a website or app in your reel, the app may take a screenshot of that public page.</li>

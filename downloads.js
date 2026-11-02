@@ -47,7 +47,11 @@ var ReelDownloads = (function () {
       alt.innerHTML = (mac ? 'On Windows instead? ' : 'On a Mac instead? ') + '<a href="' + otherFile.url + '">Download for ' + (mac ? 'Windows' : 'Mac') + '</a>.';
     }
     show('dl-help', true); show('dl-keep', true);
-    if (answer.token) remember(answer.token);
+    if (answer.token) {
+      remember(answer.token);
+      var auto = document.getElementById('dl-auto-link');
+      if (auto) { auto.href = 'updates.html#key=' + answer.token; show('dl-auto', true); }
+    }
   }
 
   /** query: "session_id=…" or "token=…". messages: what to say for an unpaid/unknown session or a busy server. */
@@ -60,6 +64,7 @@ var ReelDownloads = (function () {
         if (r.status === 402) throw 'unpaid';
         if (r.status === 404 || r.status === 400) throw 'unknown';
         if (r.status === 401) throw 'expired';
+        if (r.status === 403) throw 'ended';
         if (!r.ok) throw 'busy';
         return r.json();
       })
@@ -67,7 +72,8 @@ var ReelDownloads = (function () {
       .catch(function (why) {
         if (timer) clearTimeout(timer);
         if (why === 'expired') { try { localStorage.removeItem(KEY); } catch (e) {} }
-        var key = why === 'unpaid' ? 'unpaid' : why === 'unknown' ? 'unknown' : why === 'expired' ? 'expired' : 'busy';
+        var key = why === 'unpaid' ? 'unpaid' : why === 'unknown' ? 'unknown' : why === 'expired' ? 'expired' : why === 'ended' ? 'ended' : 'busy';
+        if (why === 'ended' && !messages.ended) messages.ended = 'This purchase no longer includes downloads: the subscription has ended or the payment was refunded. <a href="./#pricing">Subscribe again</a>, or email <a href="mailto:support@getreelstudio.com">support@getreelstudio.com</a> if you think this is a mistake.';
         fail(messages[key] || messages.busy);
         return null;
       });
