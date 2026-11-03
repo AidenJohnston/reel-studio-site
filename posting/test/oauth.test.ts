@@ -36,7 +36,7 @@ describe('connecting YouTube: the happy path', () => {
     expect(q.get('response_type')).toBe('code')
     expect(q.get('scope')).toBe(`${SCOPE_UPLOAD} ${SCOPE_READONLY}`)
     expect(q.get('access_type')).toBe('offline')
-    expect(q.get('prompt')).toBe('consent')
+    expect(q.get('prompt')).toBe('select_account consent')
     expect(q.get('code_challenge_method')).toBe('S256')
     const row = w.db.rows<{ state: string; code_verifier: string; status: string; cookie_hash: string }>('oauth_attempts')[0]
     expect(row.status).toBe('opened')

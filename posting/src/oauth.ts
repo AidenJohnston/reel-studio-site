@@ -153,7 +153,8 @@ export async function begin(url: URL, env: Env, deps: Deps): Promise<Response> {
     response_type: 'code',
     scope: `${SCOPE_UPLOAD} ${SCOPE_READONLY}`,
     access_type: 'offline',
-    prompt: 'consent',
+    // The account chooser too, so someone who connected the wrong Google account can pick another one.
+    prompt: 'select_account consent',
     state
   })
   if (verifier) {

@@ -7,9 +7,9 @@
 // Every use checks the purchase again (`entitlement()` from the downloads Worker), with a 60-second cache per
 // isolate when Deps has one.
 import { entitlement, getPurchase } from '../../worker/src/records'
-import { verifyToken } from '../../worker/src/token'
+import { hmac, verifyToken } from '../../worker/src/token'
 import type { Deps, Env } from './app'
-import { newId, randomToken, sha256hex } from './crypto'
+import { hex, newId, randomToken, sha256hex } from './crypto'
 import { SESSION_LIMIT, connectionJson, limited, readOnly, type ConnectionRow, type SessionRow } from './db'
 import { bearer, badRequest, fail, json, notConfigured, readJson, short, tooMany } from './http'
 
@@ -67,8 +67,9 @@ export async function createSession(request: Request, env: Env, deps: Deps): Pro
   const secret = env.TOKEN_SECRET && env.TOKEN_SECRET.length >= 16 ? env.TOKEN_SECRET : null
   if (!secret) throw notConfigured('token_secret')
   const now = deps.now()
-  // The IP is hashed before it is stored; the row lives an hour.
-  const wait = await limited(env.DB, SESSION_LIMIT, (await sha256hex(`ip:${clientIp(request)}`)).slice(0, 32), now)
+  // The IP is stored only as a keyed hash (a plain hash of an IPv4 address can be reversed by trying them all),
+  // and the row goes once its hour is over (limited() clears ended windows).
+  const wait = await limited(env.DB, SESSION_LIMIT, hex(await hmac(secret, `ip:${clientIp(request)}`)).slice(0, 32), now)
   if (wait !== null) throw tooMany('rate_limited', wait)
 
   const key = bearer(request)

@@ -102,7 +102,9 @@ export function run(w: World, path: string, init: Call = {}): Promise<Response> 
     h.set('content-type', 'application/json')
   }
   const url = path.startsWith('http') ? path : ORIGIN + path
-  return handle(new Request(url, { method: init.method, headers: h, body }), w.env, w.deps())
+  // A streamed body (no Content-Length, like chunked transfer) needs duplex in Node's Request.
+  const stream = body instanceof ReadableStream ? { duplex: 'half' } : {}
+  return handle(new Request(url, { method: init.method, headers: h, body, ...stream } as RequestInit), w.env, w.deps())
 }
 
 export async function body<T = Record<string, any>>(res: Response): Promise<T> {

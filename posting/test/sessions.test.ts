@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { readOnly } from '../src/db'
+import { sha256hex } from '../src/crypto'
 import { MAX_SESSIONS } from '../src/sessions'
 import { SID, body, connected, endSubscription, purchaseKey, putPurchase, run, signIn, world } from './fakes'
 
@@ -99,10 +100,14 @@ describe('POST /v1/sessions: the purchase key for a session', () => {
     expect(await body(res)).toEqual({ error: 'rate_limited' })
     expect(Number(res.headers.get('retry-after'))).toBeGreaterThan(0)
     expect((await trade(w, key, { device: 'Windows' }, '198.51.100.2')).status).toBe(201)
-    // The IP itself is never stored.
-    expect(JSON.stringify(w.db.rows('rate_limits'))).not.toContain('198.51.100')
+    // The IP itself is never stored, nor a plain hash of it (which trying every IPv4 address would undo).
+    const dump = JSON.stringify(w.db.rows('rate_limits'))
+    expect(dump).not.toContain('198.51.100')
+    expect(dump).not.toContain((await sha256hex('ip:198.51.100.1')).slice(0, 32))
     w.now += 3600_000
     expect((await trade(w, key, { device: 'Windows' }, '198.51.100.1')).status).toBe(201)
+    // The ended hour's rows went with that try; only the new window's row is left.
+    expect(w.db.rows<{ key: string; n: number }>('rate_limits')).toEqual([expect.objectContaining({ n: 1 })])
   })
 
   it('answers 503 not_configured without TOKEN_SECRET', async () => {

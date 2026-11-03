@@ -18,10 +18,10 @@ holds only a session, and the video passes through one chunk at a time without b
    minute per isolate). Sign out, sign out everywhere, disconnect and cancel work even after a subscription ends.
 2. **Connect YouTube.** The app asks for an attempt and opens our own `/oauth/youtube/begin?a=…&t=…` in the
    browser (`t` works once). That sets an HttpOnly cookie and sends the browser to Google with `state`, PKCE S256,
-   `access_type=offline` and `prompt=consent`. Google sends it back to the callback, which checks the state, the
-   cookie, the session and the purchase, trades the code, insists on `youtube.upload`, reads the channel (needs
-   `youtube.readonly`, optional: without it we connect without the channel's name), and stores the tokens
-   encrypted. The app polls the attempt every 2 seconds and learns the outcome there.
+   `access_type=offline` and `prompt=select_account consent` (the account chooser, then the consent screen). Google
+   sends it back to the callback, which checks the state, the cookie, the session and the purchase, trades the
+   code, insists on `youtube.upload`, reads the channel (needs `youtube.readonly`, optional: without it we connect
+   without the channel's name), and stores the tokens encrypted. The app polls the attempt every 2 seconds and learns the outcome there.
 3. **Post.** `POST /v1/uploads` opens a YouTube resumable upload session (Private unless the person picked
    otherwise). The app sends the file in chunks with `PUT /v1/uploads/:id` and `Content-Range`; each one is
    forwarded to Google with the access token. Google's confirmed offset is the truth: the app always continues

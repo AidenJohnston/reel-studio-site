@@ -300,6 +300,39 @@ describe('PUT /v1/uploads/:id: chunks forwarded to Google', () => {
     expect(w.google.state.calls.some((c) => c.startsWith('PUT upload'))).toBe(false)
   })
 
+  it('a body with no Content-Length (chunked) is read only up to the range: more is refused without buffering it', async () => {
+    const { w, session, uploadId } = await started()
+    let pulled = 0
+    const piece = new Uint8Array(64 * 1024)
+    // Up to 100 MiB if someone kept reading, for a range of 256 KiB.
+    const stream = new ReadableStream<Uint8Array>({
+      pull(c) {
+        pulled++
+        if (pulled > 1600) c.close()
+        else c.enqueue(piece)
+      }
+    })
+    const res = await run(w, `/v1/uploads/${uploadId}`, {
+      method: 'PUT',
+      bearer: session,
+      headers: { 'content-range': `bytes 0-${GRAIN - 1}/${SIZE}` },
+      body: stream
+    })
+    expect(res.status).toBe(400)
+    expect(await body(res)).toEqual({ error: 'bad_request', field: 'content_range' })
+    expect(pulled).toBeLessThan(10)
+    expect(w.google.state.calls.some((c) => c.startsWith('PUT upload u1 bytes'))).toBe(false)
+    // The right number of bytes, chunked, is fine.
+    const exact = new ReadableStream<Uint8Array>({
+      start(c) {
+        for (let i = 0; i < 4; i++) c.enqueue(piece)
+        c.close()
+      }
+    })
+    const ok = await run(w, `/v1/uploads/${uploadId}`, { method: 'PUT', bearer: session, headers: { 'content-range': `bytes 0-${GRAIN - 1}/${SIZE}` }, body: exact })
+    expect(await body(ok)).toEqual({ uploadId, status: 'uploading', size: SIZE, received: GRAIN })
+  })
+
   it('a final chunk shorter than 256 KiB is fine', async () => {
     const { w, session, uploadId, bytes } = await started(GRAIN + 10)
     expect((await body(await putChunk(w, session, uploadId, bytes.slice(0, GRAIN), 0, GRAIN + 10))).received).toBe(GRAIN)
@@ -403,14 +436,67 @@ describe('GET and DELETE /v1/uploads/:id', () => {
     expect(await body(await status(w, session, uploadId))).toEqual({ error: 'platform_error', retry: true })
   })
 
-  it('DELETE cancels without calling Google and wipes the session address', async () => {
+  it('DELETE cancels after asking Google only how much it has, and wipes the session address', async () => {
     const { w, session, uploadId, bytes } = await started()
     const calls = w.google.state.calls.length
     expect(await body(await run(w, `/v1/uploads/${uploadId}`, { method: 'DELETE', bearer: session }))).toEqual({ ok: true })
-    expect(w.google.state.calls.length).toBe(calls)
+    expect(w.google.state.calls.slice(calls)).toEqual(['PUT upload u1 status'])
     expect(w.db.rows<Record<string, unknown>>('uploads')[0]).toMatchObject({ status: 'cancelled', session_uri_enc: null })
     expect(await body(await status(w, session, uploadId))).toEqual({ uploadId, status: 'cancelled', size: SIZE, received: 0 })
     expect(await body(await putChunk(w, session, uploadId, bytes.slice(0, CHUNK), 0, SIZE))).toEqual({ error: 'upload_finished', status: 'cancelled' })
+  })
+
+  it('DELETE after Google already has the whole video: the post is done, not stopped', async () => {
+    // Stop pressed just as the only chunk of a short reel reached YouTube: the app gave up on the PUT's answer
+    // (here it is lost on the way back) and sent DELETE.
+    const { w, session, uploadId, bytes } = await started(1000)
+    const real = w.google.fetch
+    let lose = true
+    w.deps = () => ({
+      now: () => w.now,
+      fetch: (async (input: RequestInfo | URL, init?: RequestInit) => {
+        const res = await real(input, init)
+        if (lose && res.status === 201) {
+          lose = false
+          throw new TypeError('network')
+        }
+        return res
+      }) as typeof fetch
+    })
+    expect((await putChunk(w, session, uploadId, bytes, 0, 1000)).status).toBe(502)
+    const b = await body(await run(w, `/v1/uploads/${uploadId}`, { method: 'DELETE', bearer: session }))
+    expect(b).toEqual({ ok: true, uploadId, status: 'done', size: 1000, received: 1000, video: expect.objectContaining({ id: 'v0000000001', channelName: 'Fake Channel' }) })
+    expect(w.db.rows<Record<string, unknown>>('uploads')[0]).toMatchObject({ status: 'done', video_id: 'v0000000001', session_uri_enc: null })
+    // A second DELETE (or GET) answers the same.
+    expect(await body(await run(w, `/v1/uploads/${uploadId}`, { method: 'DELETE', bearer: session }))).toEqual(b)
+    expect((await body(await status(w, session, uploadId))).status).toBe('done')
+  })
+
+  it('DELETE with Google unreachable still cancels', async () => {
+    const { w, session, uploadId } = await started()
+    w.google.state.faults.push({ on: 'status', status: 500 })
+    expect(await body(await run(w, `/v1/uploads/${uploadId}`, { method: 'DELETE', bearer: session }))).toEqual({ ok: true })
+    expect(w.db.rows<Record<string, unknown>>('uploads')[0]).toMatchObject({ status: 'cancelled', session_uri_enc: null })
+  })
+
+  it('a chunk answer that lands after Stop leaves the upload cancelled', async () => {
+    const { w, session, uploadId, bytes } = await started()
+    // DELETE arrives while the first chunk is on its way to Google.
+    const real = w.google.fetch
+    let cancelled: Response | null = null
+    w.deps = () => ({
+      now: () => w.now,
+      fetch: (async (input: RequestInfo | URL, init?: RequestInit) => {
+        const range = new Headers(init?.headers).get('content-range') ?? ''
+        if (!cancelled && init?.method === 'PUT' && /^bytes 0-/.test(range)) {
+          cancelled = await run({ ...w, deps: () => ({ now: () => w.now, fetch: real }) }, `/v1/uploads/${uploadId}`, { method: 'DELETE', bearer: session })
+        }
+        return real(input, init)
+      }) as typeof fetch
+    })
+    expect((await putChunk(w, session, uploadId, bytes.slice(0, CHUNK), 0, SIZE)).status).toBe(200)
+    expect(await body(cancelled!)).toEqual({ ok: true })
+    expect(w.db.rows<Record<string, unknown>>('uploads')[0]).toMatchObject({ status: 'cancelled', received: 0 })
   })
 
   it("another purchase's upload is 404", async () => {

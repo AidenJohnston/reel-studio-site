@@ -112,15 +112,18 @@ export const SESSION_LIMIT: Limit = { bucket: 'session', n: 20, windowSec: 3600 
 export const ATTEMPT_LIMIT: Limit = { bucket: 'attempt', n: 20, windowSec: 3600 }
 export const UPLOAD_LIMIT: Limit = { bucket: 'upload', n: 30, windowSec: 86400 }
 
-/** Fixed windows in D1. Counts this try and answers null if it is allowed, or the seconds until the window ends. */
+/** Fixed windows in D1. Counts this try and answers null if it is allowed, or the seconds until the window ends.
+ * Rows of windows that have ended are deleted on the way, so none outlives its window by more than the time to the
+ * next limited try (the daily cleanup catches the rest). */
 export async function limited(db: D1Database, limit: Limit, who: string, nowMs: number): Promise<number | null> {
   const windowMs = limit.windowSec * 1000
   const window = Math.floor(nowMs / windowMs)
   const ends = (window + 1) * windowMs
-  const row = await db
-    .prepare('INSERT INTO rate_limits (key, n, expires_at) VALUES (?, 1, ?) ON CONFLICT (key) DO UPDATE SET n = n + 1 RETURNING n')
-    .bind(`${limit.bucket}:${window}:${who}`, ends)
-    .first<{ n: number }>()
+  const [, counted] = await db.batch<{ n: number }>([
+    db.prepare('DELETE FROM rate_limits WHERE expires_at <= ?').bind(nowMs),
+    db.prepare('INSERT INTO rate_limits (key, n, expires_at) VALUES (?, 1, ?) ON CONFLICT (key) DO UPDATE SET n = n + 1 RETURNING n').bind(`${limit.bucket}:${window}:${who}`, ends)
+  ])
+  const row = counted.results?.[0]
   if ((row?.n ?? 0) <= limit.n) return null
   return Math.max(1, Math.ceil((ends - nowMs) / 1000))
 }

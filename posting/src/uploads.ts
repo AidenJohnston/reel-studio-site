@@ -193,20 +193,33 @@ function doneJson(u: UploadRow, channelName: string | null) {
   return { uploadId: u.id, status: 'done', size: u.size, received: u.size, video }
 }
 
+// The updates below only touch a row that is still `uploading`: a chunk answer that lands after Stop (or after
+// another request finished the row) must not bring it back or change how it ended. The one exception is done:
+// YouTube made the video, so the row says so even if Stop came first.
+
 async function setReceived(env: Env, deps: Deps, u: UploadRow, received: number): Promise<void> {
   u.received = Math.min(Math.max(0, received), u.size)
-  await env.DB.prepare('UPDATE uploads SET received = ?, updated_at = ? WHERE id = ?').bind(u.received, deps.now(), u.id).run()
+  await env.DB.prepare("UPDATE uploads SET received = ?, updated_at = ? WHERE id = ? AND status = 'uploading'").bind(u.received, deps.now(), u.id).run()
 }
 
-async function finishAs(env: Env, deps: Deps, u: UploadRow, status: 'failed' | 'expired' | 'cancelled', error: string | null = null): Promise<void> {
+/** false if the row had already ended some other way. */
+async function finishAs(env: Env, deps: Deps, u: UploadRow, status: 'failed' | 'expired' | 'cancelled', error: string | null = null): Promise<boolean> {
+  const r = await env.DB.prepare("UPDATE uploads SET status = ?, error = ?, session_uri_enc = NULL, updated_at = ? WHERE id = ? AND status = 'uploading'")
+    .bind(status, error, deps.now(), u.id)
+    .run()
+  if ((r.meta.changes ?? 0) !== 1) return false
   u.status = status
   u.error = error
-  await env.DB.prepare('UPDATE uploads SET status = ?, error = ?, session_uri_enc = NULL, updated_at = ? WHERE id = ?').bind(status, error, deps.now(), u.id).run()
   console.log(`[posting] upload ${short(u.id)} ${status}${error ? ` (${error})` : ''}`)
+  return true
 }
 
 /** YouTube answered 200/201: the video resource. */
 async function finishDone(env: Env, deps: Deps, u: UploadRow, res: Response, conn: ConnectionRow): Promise<Response> {
+  return json(await recordDone(env, deps, u, res, conn))
+}
+
+async function recordDone(env: Env, deps: Deps, u: UploadRow, res: Response, conn: ConnectionRow): Promise<ReturnType<typeof doneJson>> {
   const v = (await res.json().catch(() => null)) as { id?: unknown; status?: { privacyStatus?: unknown }; snippet?: { channelTitle?: unknown } } | null
   const videoId = typeof v?.id === 'string' && /^[A-Za-z0-9_-]{6,32}$/.test(v.id) ? v.id : null
   const privacy = typeof v?.status?.privacyStatus === 'string' && /^[a-z]{1,20}$/.test(v.status.privacyStatus) ? v.status.privacyStatus : null
@@ -214,12 +227,12 @@ async function finishDone(env: Env, deps: Deps, u: UploadRow, res: Response, con
   u.received = u.size
   u.video_id = videoId
   u.privacy = privacy
-  await env.DB.prepare("UPDATE uploads SET status = 'done', received = size, video_id = ?, privacy = ?, session_uri_enc = NULL, updated_at = ? WHERE id = ?")
+  await env.DB.prepare("UPDATE uploads SET status = 'done', received = size, video_id = ?, privacy = ?, error = NULL, session_uri_enc = NULL, updated_at = ? WHERE id = ?")
     .bind(videoId, privacy, deps.now(), u.id)
     .run()
   console.log(`[posting] upload ${short(u.id)} done${privacy && privacy !== u.privacy_requested ? ` (YouTube set ${privacy}, asked ${u.privacy_requested})` : ''}`)
   const channelName = conn.channel_name ?? (typeof v?.snippet?.channelTitle === 'string' ? v.snippet.channelTitle : null)
-  return json(doneJson(u, channelName))
+  return doneJson(u, channelName)
 }
 
 /** Ask Google how much it has: an empty PUT with `Content-Range: bytes * /size`. */
@@ -228,6 +241,29 @@ async function status(env: Env, deps: Deps, l: Live, u: UploadRow): Promise<Resp
 }
 
 // ---- PUT /v1/uploads/:id ---------------------------------------------------------------------------------
+
+/** The body, which must be exactly `length` bytes, read as it arrives. Reading stops as soon as more than
+ * `length` arrive, so MAX_CHUNK bounds what is held in memory even when there is no Content-Length (a chunked
+ * body), where arrayBuffer() would take whatever the platform lets through. */
+async function readChunk(request: Request, length: number): Promise<Uint8Array> {
+  const out = new Uint8Array(length)
+  let at = 0
+  if (request.body) {
+    const reader = request.body.getReader()
+    for (;;) {
+      const { done, value } = await reader.read()
+      if (done) break
+      if (at + value.byteLength > length) {
+        await reader.cancel().catch(() => undefined)
+        throw badRequest('content_range')
+      }
+      out.set(value, at)
+      at += value.byteLength
+    }
+  }
+  if (at !== length) throw badRequest('content_range')
+  return out
+}
 
 export async function putChunk(request: Request, env: Env, deps: Deps, s: SessionRow, id: string): Promise<Response> {
   const u = await uploadOf(env, s, id)
@@ -243,8 +279,7 @@ export async function putChunk(request: Request, env: Env, deps: Deps, s: Sessio
   const declared = request.headers.get('content-length')
   if (declared !== null && Number(declared) !== length) throw badRequest('content_range')
   const l = await live(env, u)
-  const body = new Uint8Array(await request.arrayBuffer())
-  if (body.byteLength !== length) throw badRequest('content_range')
+  const body = await readChunk(request, length)
 
   const res = await toSession(env, deps, l, `bytes ${first}-${last}/${u.size}`, body)
   if (res.status === 308) {
@@ -299,9 +334,25 @@ export async function getUpload(env: Env, deps: Deps, s: SessionRow, id: string)
 
 // ---- DELETE /v1/uploads/:id ------------------------------------------------------------------------------
 
-/** Cancel. Google isn't told (cancelling a YouTube upload session isn't documented); the session expires. */
+/** Cancel. Google isn't told to stop (cancelling a YouTube upload session isn't documented); the session expires.
+ * But the last chunk may already be with YouTube when Stop is pressed (a short reel is one chunk), so we ask
+ * Google first: if it has the whole video, the post is done, and the answer says so (`status: 'done'` and the
+ * video, as GET answers it) instead of letting the app call it stopped. If Google can't be asked, it's cancelled. */
 export async function cancelUpload(env: Env, deps: Deps, s: SessionRow, id: string): Promise<Response> {
   const u = await uploadOf(env, s, id)
-  if (u.status === 'uploading') await finishAs(env, deps, u, 'cancelled')
+  if (u.status === 'uploading') {
+    const finished = await (async () => {
+      const l = await live(env, u)
+      const res = await status(env, deps, l, u)
+      return res.status === 200 || res.status === 201 ? recordDone(env, deps, u, res, l.conn) : null
+    })().catch(() => null)
+    if (finished) return json({ ok: true, ...finished })
+    // Not changed: another request ended it first (a late chunk answer may have made it done). Answer that.
+    if (!(await finishAs(env, deps, u, 'cancelled'))) Object.assign(u, await uploadOf(env, s, id))
+  }
+  if (u.status === 'done') {
+    const conn = await env.DB.prepare('SELECT channel_name FROM connections WHERE id = ?').bind(u.connection_id).first<{ channel_name: string | null }>()
+    return json({ ok: true, ...doneJson(u, conn?.channel_name ?? null) })
+  }
   return json({ ok: true })
 }
