@@ -1,0 +1,39 @@
+// Reel Studio posting Worker: posts a finished reel to the buyer's YouTube channel. A separate Worker from the
+// downloads one (../worker), so a posting bug can't break downloads or updates. It reads the downloads Worker's
+// purchase records (the same KV namespace, read only in code: src/app.ts readOnly) and keeps its own state in D1.
+//
+// The top level is for `npm run dev` only (local KV and D1, no route). Staging: `npm run deploy:staging`.
+// Production (post.getreelstudio.com) is added here only once it is approved; there is no plain deploy script.
+//
+// Secrets (never in this file; `npx wrangler secret put <NAME> --env staging`, or posting/.dev.vars locally):
+//   TOKEN_SECRET          the SAME value as the downloads Worker of the same environment (checks purchase keys)
+//   ENC_KEY               base64url of 32 random bytes; encrypts Google tokens and upload addresses at rest
+//   GOOGLE_CLIENT_ID      the Google OAuth web client
+//   GOOGLE_CLIENT_SECRET
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "reel-studio-posting",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-01",
+  "observability": { "enabled": true },
+  "workers_dev": false,
+  "vars": { "PUBLIC_ORIGIN": "http://127.0.0.1:8788", "SITE_ORIGIN": "https://getreelstudio.com" },
+  "kv_namespaces": [{ "binding": "PURCHASES", "id": "local-purchases" }],
+  "d1_databases": [
+    { "binding": "DB", "database_name": "reel-studio-posting-local", "database_id": "00000000-0000-0000-0000-000000000000", "migrations_dir": "migrations" }
+  ],
+  // Daily retention (src/retention.ts), 04:17 UTC. Environments inherit triggers.
+  "triggers": { "crons": ["17 4 * * *"] },
+  "env": {
+    "staging": {
+      "name": "reel-studio-posting-staging",
+      "routes": [{ "pattern": "post-staging.getreelstudio.com", "custom_domain": true }],
+      "vars": { "PUBLIC_ORIGIN": "https://post-staging.getreelstudio.com", "SITE_ORIGIN": "https://getreelstudio.com" },
+      // The downloads Worker's STAGING purchases namespace (worker/wrangler.jsonc env.staging).
+      "kv_namespaces": [{ "binding": "PURCHASES", "id": "be3d2a741c524c48b7f876693508de9f" }],
+      "d1_databases": [
+        { "binding": "DB", "database_name": "reel-studio-posting-staging", "database_id": "b5c86ba3-6401-4b63-bd1e-856d07f1e06a", "migrations_dir": "migrations" }
+      ]
+    }
+  }
+}

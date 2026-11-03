@@ -16,6 +16,7 @@ domain root or under a subpath.
 | `img/` | One real reel and the app photographed on it (see `img/CREDITS.md`); `hero-reel.mp4` is the muted loop in the hero phone. The landing page crops them in CSS (`.crop` with `--x/--y/--w/--h` in pixels of the 1280x820 original) |
 | `wrangler.jsonc`, `site-worker.js`, `.assetsignore` | How Cloudflare serves this site (see below) |
 | `worker/` | The Cloudflare Worker behind `dl.getreelstudio.com`: paid downloads, the update manifest, the release tool. Its own README |
+| `posting/` | The Cloudflare Worker that posts a finished reel to YouTube (staging: `post-staging.getreelstudio.com`). Its own README |
 
 ## License
 
@@ -28,7 +29,7 @@ license; `fonts/` keeps its own license.
 
 The site is an assets-only Cloudflare Worker named `reel-studio-site` (config: `wrangler.jsonc`), on custom domains
 `getreelstudio.com` and `www.getreelstudio.com`. `site-worker.js` redirects www to the bare domain and adds the
-security headers; `.assetsignore` keeps `worker/`, the config and this README off the site.
+security headers; `.assetsignore` keeps `worker/`, `posting/`, the config and this README off the site.
 
 Merging to `main` does not publish. After a merge, from this folder:
 
