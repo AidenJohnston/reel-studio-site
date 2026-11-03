@@ -1,0 +1,20 @@
+{
+  "name": "reel-studio-posting",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Cloudflare Worker behind post.getreelstudio.com: posts a finished reel to the buyer's YouTube channel.",
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "dev": "wrangler dev --port 8788",
+    "deploy:staging": "wrangler deploy --env staging",
+    "tail:staging": "wrangler tail --env staging"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20261029.1",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.5",
+    "wrangler": "^4.156.0"
+  }
+}
