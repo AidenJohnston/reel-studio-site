@@ -17,6 +17,13 @@ domain root or under a subpath.
 | `wrangler.jsonc`, `site-worker.js`, `.assetsignore` | How Cloudflare serves this site (see below) |
 | `worker/` | The Cloudflare Worker behind `dl.getreelstudio.com`: paid downloads, the update manifest, the release tool. Its own README |
 
+## License
+
+`worker/` and `posting/` are licensed under the GNU Affero General Public License, version 3 only (`AGPL-3.0-only`).
+Each has a `LICENSE` file, and Copyright (C) 2026 Curate Technologies LLC. This grants no rights in the Reel Studio name
+or logo. The rest of this repository (the pages, their wording, images and design) is not offered under an open-source
+license; `fonts/` keeps its own license.
+
 ## Publish on Cloudflare
 
 The site is an assets-only Cloudflare Worker named `reel-studio-site` (config: `wrangler.jsonc`), on custom domains

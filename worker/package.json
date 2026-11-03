@@ -2,6 +2,7 @@
   "name": "reel-studio-downloads",
   "version": "1.0.0",
   "private": true,
+  "license": "AGPL-3.0-only",
   "description": "Cloudflare Worker behind dl.getreelstudio.com: hands paying customers their Reel Studio installer.",
   "type": "module",
   "scripts": {
