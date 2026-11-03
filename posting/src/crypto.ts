@@ -4,7 +4,8 @@
 // `k1.<iv>.<ciphertext+tag>`, both base64url. The associated data names the row the value belongs to
 // (`conn:<id>` for a refresh token, `conn:<id>:access` for an access token, `upload:<id>` for an upload's session
 // address), so a value copied into another row fails to decrypt.
-import { b64url, fromB64url, timingSafeEqual } from '../../worker/src/token'
+// The .ts extension lets tools/seed-connection.mjs run this file under plain Node (type stripping).
+import { b64url, fromB64url, timingSafeEqual } from '../../worker/src/token.ts'
 
 const enc = new TextEncoder()
 const dec = new TextDecoder()

@@ -32,7 +32,7 @@
       // The downloads Worker's STAGING purchases namespace (worker/wrangler.jsonc env.staging).
       "kv_namespaces": [{ "binding": "PURCHASES", "id": "be3d2a741c524c48b7f876693508de9f" }],
       "d1_databases": [
-        { "binding": "DB", "database_name": "reel-studio-posting-staging", "database_id": "STAGING_D1_ID", "migrations_dir": "migrations" }
+        { "binding": "DB", "database_name": "reel-studio-posting-staging", "database_id": "b5c86ba3-6401-4b63-bd1e-856d07f1e06a", "migrations_dir": "migrations" }
       ]
     }
   }
