@@ -2,6 +2,7 @@
 .gitignore
 .wrangler
 worker
+posting
 wrangler.jsonc
 site-worker.js
 README.md

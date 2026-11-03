@@ -42,7 +42,8 @@
   <div class="wrap">
     <h1>Open-source parts inside Reel Studio</h1>
     <p class="doc-meta">Last updated October 30, 2026</p>
-    <p>Reel Studio uses open-source software, and each part keeps its own license. This page is the source offer for the programs we build ourselves and ship in the installers: FFmpeg and FFprobe, plus the two libraries that open iPhone (HEIC) photos.</p>
+    <p>Reel Studio is open source under the GNU Affero General Public License, version 3 only. Its complete source is on <a href="https://github.com/getcurate/reel-studio">GitHub</a>, free and with no account: the source of each release is the repository at that version's tag. Versions through 0.1.4 stay under the MIT license.</p>
+    <p>Reel Studio also uses other open-source software, and each part keeps its own license. This page is the source offer for the programs we build ourselves and ship in the installers: FFmpeg and FFprobe, plus the two libraries that open iPhone (HEIC) photos.</p>
 
     <h2>FFmpeg 7.1.1, build rs2 (GNU GPL v3)</h2>
     <p>Reel Studio runs <code>ffmpeg</code> and <code>ffprobe</code> as separate programs to read, convert and render video. We compile them from the unmodified FFmpeg 7.1.1 source with the libraries below. Because they include x264 and are built with <code>--enable-gpl --enable-version3</code>, the two programs are licensed under the <a href="https://www.gnu.org/licenses/gpl-3.0.html">GNU General Public License, version 3</a>. A copy of the license ships next to them in the app.</p>
