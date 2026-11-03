@@ -6,10 +6,12 @@
 // --auto skips the Allow/Cancel page. Point the Worker at it with the vars it prints (posting/.dev.vars).
 // Extras, for checking and for injecting failures by hand:
 //   GET  /__fake/state            uploads (id, size, received, done, title, privacy) and token counts, never tokens
+//   GET  /__fake/upload?id=u1     that upload's bytes so far: {size, received, sha256}, to check every byte arrived in order
 //   POST /__fake/faults           a fault or an array of them, e.g. {"on":"chunk","dropAfterBytes":300000}
 //   POST /__fake/flags            {"quotaExceeded":true} {"uploadLimitExceeded":true} {"channel":null} {"autoApprove":true}
 //   POST /__fake/revoke-all       every refresh token now answers invalid_grant
 //   POST /__fake/expire?id=u1     that upload session now answers 404
+import { createHash } from 'node:crypto'
 import http from 'node:http'
 import { createFakeGoogle } from '../test/fake-google.ts'
 
@@ -50,6 +52,12 @@ const server = http.createServer(async (req, res) => {
   try {
     const raw = await readBody(req)
     if (url.pathname === '/__fake/state' && req.method === 'GET') return sendJson(res, 200, google.summary())
+    if (url.pathname === '/__fake/upload' && req.method === 'GET') {
+      const u = google.state.uploads.get(url.searchParams.get('id') ?? '')
+      if (!u) return sendJson(res, 404, { error: 'no such upload' })
+      const bytes = u.bytes
+      return sendJson(res, 200, { size: u.size, received: u.received, done: u.done, sha256: createHash('sha256').update(bytes).digest('hex'), length: bytes.length })
+    }
     if (url.pathname === '/__fake/faults' && req.method === 'POST') {
       const f = JSON.parse(raw.toString('utf8') || '[]')
       google.state.faults.push(...(Array.isArray(f) ? f : [f]))

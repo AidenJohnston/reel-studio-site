@@ -2,7 +2,9 @@
 // it, minted with posting/.dev.vars' TOKEN_SECRET. Paste the key into the app (REELSTUDIO_POSTING_URL pointing
 // at the local Worker) to sign in. It never touches a remote namespace: the KV write is `--local`.
 //
-//   node tools/dev-seed.mjs [--plan monthly|once]
+//   node tools/dev-seed.mjs [--plan monthly|once] [--ended]
+//
+// --ended makes a monthly purchase whose subscription was cancelled: its key is signed but not entitled.
 import { spawnSync } from 'node:child_process'
 import { createHmac } from 'node:crypto'
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
@@ -16,6 +18,8 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const args = process.argv.slice(2)
 const plan = args.includes('--plan') ? args[args.indexOf('--plan') + 1] : 'monthly'
 if (plan !== 'monthly' && plan !== 'once') throw new Error('--plan is monthly or once')
+const ended = args.includes('--ended')
+if (ended && plan !== 'monthly') throw new Error('--ended is for a monthly plan')
 
 const vars = Object.fromEntries(
   readFileSync(join(root, '.dev.vars'), 'utf8')
@@ -27,15 +31,21 @@ const vars = Object.fromEntries(
 const secret = vars.TOKEN_SECRET
 if (!secret || secret.length < 16) throw new Error('posting/.dev.vars needs TOKEN_SECRET (32+ characters)')
 
-const sid = `cs_test_local_posting_${plan}`
+const sid = `cs_test_local_posting_${plan}${ended ? '_ended' : ''}`
+const subscription = ended ? 'sub_test_local_posting_ended' : null
 const now = Date.now()
-const purchase = { sid, plan, emailHash: null, customer: null, subscription: null, paymentIntent: null, created: Math.floor(now / 1000), recordedAt: now, source: 'claim' }
+const purchase = { sid, plan, emailHash: null, customer: null, subscription, paymentIntent: null, created: Math.floor(now / 1000), recordedAt: now, source: 'claim' }
 
 mkdirSync(join(root, '.wrangler'), { recursive: true })
-const file = join(root, '.wrangler', 'dev-seed-purchase.json')
-writeFileSync(file, JSON.stringify(purchase))
-const r = spawnSync('npx', shellArgs(['wrangler', 'kv', 'key', 'put', `sess:${sid}`, '--path', file, '--binding', 'PURCHASES', '--local']), { cwd: root, stdio: 'inherit', shell: process.platform === 'win32' })
-if (r.status !== 0) process.exit(r.status ?? 1)
+const put = (key, value) => {
+  const file = join(root, '.wrangler', 'dev-seed-record.json')
+  writeFileSync(file, JSON.stringify(value))
+  const r = spawnSync('npx', shellArgs(['wrangler', 'kv', 'key', 'put', key, '--path', file, '--binding', 'PURCHASES', '--local']), { cwd: root, stdio: 'inherit', shell: process.platform === 'win32' })
+  if (r.status !== 0) process.exit(r.status ?? 1)
+}
+put(`sess:${sid}`, purchase)
+// The same record the downloads Worker's Stripe webhook keeps (worker/src/records.ts setSubscriptionState).
+if (subscription) put(`sub:${subscription}`, { status: 'canceled', at: Math.floor(now / 1000) })
 
 // The same format as the downloads Worker's mintToken (worker/src/token.ts).
 const b64url = (buf) => Buffer.from(buf).toString('base64url')
