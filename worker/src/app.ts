@@ -11,6 +11,8 @@
 //   POST /api/link  {email}        "email me my link" (always answers ok; sends only if we have a purchase)
 //   POST /stripe/webhook           purchases, subscription changes, refunds, disputes (signature checked)
 //   GET  /source/<release>/<file>  public, no token: the open-source parts' source (src/source.ts)
+//   POST /v1/support               the app's "Report a problem" form (src/support.ts)
+//   /admin/support…                the internal support dashboard, behind the admin secret (src/support-admin.ts)
 //
 // No account, no cookie, no analytics. A purchase record is a session id, a plan, a keyed hash of the
 // buyer's email, the Stripe customer id, and timestamps. What this code logs is a short session id and a
@@ -28,6 +30,8 @@ import { allow, clientIp } from './ratelimit'
 import { PAYMENT_INTENT_ID_RE, SUBSCRIPTION_ID_RE, applyRetention, entitlement, findByEmailHash, getPurchase, markReceipt, recordPurchase, setSubscriptionState, sidFor, updatePaymentState, type Purchase } from './records'
 import { streamObject } from './serve'
 import { handleSource } from './source'
+import { handleSupportReport } from './support'
+import { handleSupportAdmin } from './support-admin'
 import { SESSION_ID_RE, fetchSession, sessionEmail, sessionIsPaid, sessionPlan, verifyStripeSignature, type StripeSession } from './stripe'
 import { TOKEN_DAYS, hashEmail, mintToken, normalizeEmail, verifyToken, type Plan } from './token'
 
@@ -43,6 +47,8 @@ export interface Env {
   STRIPE_WEBHOOK_SECRET?: string
   /** For the publish script only (src/admin.ts). Unset = no /admin routes. */
   ADMIN_SECRET?: string
+  /** Opens the support dashboard (/admin/support) and nothing else. Optional; ADMIN_SECRET opens it too. */
+  SUPPORT_ADMIN_SECRET?: string
 }
 
 export interface Deps {
@@ -70,6 +76,8 @@ export async function handle(request: Request, env: Env, ctx: ExecutionContext, 
     if (path.startsWith('/d/') && (request.method === 'GET' || request.method === 'HEAD')) return await download(request, url, env, deps)
     if (path.startsWith('/u/') && (request.method === 'GET' || request.method === 'HEAD')) return await updateFeed(request, url, env, deps)
     if ((path === '/source' || path.startsWith('/source/')) && (request.method === 'GET' || request.method === 'HEAD')) return await handleSource(request, url, env.INSTALLERS, deps.cache)
+    if (path === '/v1/support' && request.method === 'POST') return await handleSupportReport(request, url, env, ctx, deps.now())
+    if (path === '/admin/support' || path.startsWith('/admin/support/')) return await handleSupportAdmin(request, url, env, deps.now())
     if (path.startsWith('/admin/')) return await handleAdmin(request, url, env, deps.now())
     if (path === '/' || path === '') return Response.redirect(`${env.SITE_ORIGIN}/`, 302)
     return json({ error: 'not found' }, 404, env)
