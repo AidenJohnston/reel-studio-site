@@ -6,8 +6,11 @@
 //   STRIPE_SECRET_KEY      a RESTRICTED Stripe key with only "Checkout Sessions: Read"
 //   STRIPE_WEBHOOK_SECRET  the signing secret of the webhook endpoint that posts to /stripe/webhook
 //   ADMIN_SECRET           random 32+ bytes; lets tools/publish.mjs upload installers and publish the manifest
+//                          (and opens the support dashboard, /admin/support)
+//   SUPPORT_ADMIN_SECRET   optional, random 32+ bytes; opens the support dashboard and nothing else
 //
-// The release manifest lives in KV under the key `manifest` (see README.md); the installers live in R2.
+// The release manifest lives in KV under the key `manifest` (see README.md); the installers live in R2. Support
+// reports from the app (POST /v1/support) and their screenshots live in the same KV under `support:` (src/support.ts).
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "reel-studio-downloads",

@@ -50,3 +50,33 @@ ${i.updatesUrl ? `<p style="margin:0 0 16px">Once Reel Studio is installed: <a h
 </body></html>`
   return { subject, text, html }
 }
+
+/** The short notice support gets for each report from the app. Plain text: it quotes what the reporter typed,
+ * and the screenshot and diagnostics stay on the dashboard (behind the admin secret), never in a mailbox. */
+export function supportNotice(
+  r: { id: string; created: number; what: string; expected: string; email: string | null; appVersion: string; os: string; screenshot: unknown; diagnostics: string; key: { status: string; plan?: string; entitled?: boolean } },
+  dashboardUrl: string
+): { subject: string; text: string } {
+  const flat = (s: string) => s.replace(/\s+/g, ' ').trim()
+  const head = (s: string, lines: number, chars: number) => {
+    const kept = s.split('\n').slice(0, lines).join('\n')
+    const cut = kept.length > chars ? kept.slice(0, chars - 1) + '…' : kept
+    return cut + (cut.length < s.length ? '\n[…]' : '')
+  }
+  const first = flat(r.what.split('\n').find((l) => l.trim()) ?? '')
+  const subject = `Report ${r.id}: ${first.length > 70 ? first.slice(0, 69) + '…' : first}`
+  const who =
+    r.key.status === 'valid' ? `key: ${r.key.plan ?? '?'} purchase${r.key.entitled === false ? ' (no longer entitled)' : ''}` : r.key.status === 'invalid' ? 'key: sent, not ours' : 'key: none'
+  const lines = [
+    `Report ${r.id}, ${new Date(r.created).toISOString().replace('T', ' ').slice(0, 16)} UTC`,
+    `Reel Studio ${r.appVersion} on ${flat(r.os)}; ${who}`,
+    `Reply to: ${r.email ?? 'no email given'}`,
+    '',
+    'What happened:',
+    head(r.what, 8, 800),
+    ''
+  ]
+  if (r.expected) lines.push('Expected:', head(r.expected, 4, 400), '')
+  lines.push(`Screenshot: ${r.screenshot ? 'yes' : 'no'}. Diagnostics: ${r.diagnostics ? 'yes' : 'no'}.`, `Open it: ${dashboardUrl}`)
+  return { subject, text: lines.join('\n') }
+}

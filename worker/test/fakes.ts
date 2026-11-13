@@ -4,18 +4,44 @@ import { hmac } from '../src/token'
 
 export class FakeKV {
   store = new Map<string, string>()
+  /** Binary values (KV takes an ArrayBuffer or a typed array too). */
+  bytes = new Map<string, Uint8Array>()
   /** Keys with an expiry: key → expirationTtl (seconds). A put without one clears it, as in KV. */
   ttl = new Map<string, number>()
-  async get(key: string): Promise<string | null> {
+  /** Keys with an absolute expiry: key → `expiration` (seconds since 1970). */
+  expiration = new Map<string, number>()
+  meta = new Map<string, unknown>()
+  async get(key: string, type?: string): Promise<string | ArrayBuffer | null> {
+    if (type === 'arrayBuffer') {
+      const b = this.bytes.get(key) ?? (this.store.has(key) ? new TextEncoder().encode(this.store.get(key)!) : undefined)
+      return b ? (b.slice().buffer as ArrayBuffer) : null
+    }
+    if (this.bytes.has(key)) return new TextDecoder().decode(this.bytes.get(key))
     return this.store.get(key) ?? null
   }
-  async put(key: string, value: string, opts?: { expirationTtl?: number }): Promise<void> {
-    this.store.set(key, value)
+  async put(key: string, value: string | ArrayBuffer | Uint8Array, opts?: { expirationTtl?: number; expiration?: number; metadata?: unknown }): Promise<void> {
+    if (typeof value === 'string') (this.store.set(key, value), this.bytes.delete(key))
+    else (this.bytes.set(key, value instanceof Uint8Array ? value.slice() : new Uint8Array(value)), this.store.delete(key))
     if (opts?.expirationTtl) this.ttl.set(key, opts.expirationTtl)
     else this.ttl.delete(key)
+    if (opts?.expiration) this.expiration.set(key, opts.expiration)
+    else this.expiration.delete(key)
+    if (opts?.metadata !== undefined) this.meta.set(key, structuredClone(opts.metadata))
+    else this.meta.delete(key)
   }
   async delete(key: string): Promise<void> {
     this.store.delete(key)
+    this.bytes.delete(key)
+    this.meta.delete(key)
+  }
+  /** Ascending key order, like KV; the cursor is the index to resume at. */
+  async list(opts: { prefix?: string; limit?: number; cursor?: string } = {}) {
+    const all = [...new Set([...this.store.keys(), ...this.bytes.keys()])].filter((k) => k.startsWith(opts.prefix ?? '')).sort()
+    const start = opts.cursor ? Number(opts.cursor) : 0
+    const limit = opts.limit ?? 1000
+    const page = all.slice(start, start + limit)
+    const done = start + limit >= all.length
+    return { keys: page.map((name) => ({ name, metadata: this.meta.get(name) })), list_complete: done, cursor: done ? undefined : String(start + limit) }
   }
 }
 
@@ -146,7 +172,9 @@ export interface World {
 
 export const ADMIN = 'admin-secret-with-at-least-thirty-two-bytes-0123456789'
 
-export function world(opts: { manifest?: unknown; secrets?: boolean; email?: boolean; admin?: boolean; stripe?: () => Promise<Response> } = {}): World {
+export const SUPPORT_ADMIN = 'support-only-secret-with-at-least-thirty-two-bytes-012345'
+
+export function world(opts: { manifest?: unknown; secrets?: boolean; email?: boolean | ((m: unknown) => Promise<unknown>); admin?: boolean; supportAdmin?: boolean; stripe?: () => Promise<Response> } = {}): World {
   const kv = new FakeKV()
   const r2 = new FakeR2()
   const manifest = 'manifest' in opts ? opts.manifest : MANIFEST
@@ -172,7 +200,8 @@ export function world(opts: { manifest?: unknown; secrets?: boolean; email?: boo
       FROM_NAME: 'Reel Studio',
       ...(opts.secrets === false ? {} : { TOKEN_SECRET: SECRET, STRIPE_SECRET_KEY: STRIPE_KEY, STRIPE_WEBHOOK_SECRET: WHSEC }),
       ...(opts.admin ? { ADMIN_SECRET: ADMIN } : {}),
-      ...(opts.email ? { EMAIL: { send: async (m: unknown) => (emails.push(m), { messageId: 'id-1' }) } as unknown as SendEmail } : {})
+      ...(opts.supportAdmin ? { SUPPORT_ADMIN_SECRET: SUPPORT_ADMIN } : {}),
+      ...(opts.email ? { EMAIL: { send: typeof opts.email === 'function' ? opts.email : async (m: unknown) => (emails.push(m), { messageId: 'id-1' }) } as unknown as SendEmail } : {})
     }
   }
   return w
